@@ -1,0 +1,14 @@
+{
+  "name": "amap-search",
+  "version": "1.0.0",
+  "private": true,
+  "description": "高德 POI 搜索插件（TREK page 类型）",
+  "main": "server/index.js",
+  "scripts": {
+    "pack": "trek-plugin-sdk pack"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1",
+    "trek-plugin-sdk": "*"
+  }
+}

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1600px; height: 900px;
+    font-family: "WenQuanYi Zen Hei", "PingFang SC", sans-serif;
+    background: #0b1120;
+    overflow: hidden;
+    position: relative;
+    color: #e2e8f0;
+  }
+  /* 现代 SaaS 渐变背景 + 光斑 */
+  .bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(600px 400px at 15% 20%, rgba(255, 122, 26, .18), transparent 65%),
+      radial-gradient(700px 500px at 85% 80%, rgba(56, 189, 248, .14), transparent 65%),
+      radial-gradient(500px 400px at 70% 15%, rgba(129, 140, 248, .16), transparent 60%),
+      linear-gradient(160deg, #0b1120 0%, #111a33 55%, #0c1f26 100%);
+  }
+  /* 微弱网格纹理（SaaS 感） */
+  .grid-overlay {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(148,163,184,.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148,163,184,.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+
+  .wrap { position: relative; padding: 56px 72px 48px; height: 100%; display: flex; flex-direction: column; }
+
+  /* 顶栏 */
+  .top { display: flex; align-items: center; gap: 16px; margin-bottom: 40px; }
+  .logo {
+    width: 44px; height: 44px; border-radius: 13px;
+    background: linear-gradient(135deg, #ff7a1a, #ffb25e);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; box-shadow: 0 8px 24px rgba(255,122,26,.35);
+  }
+  .brand { font-size: 26px; font-weight: 700; letter-spacing: .5px; }
+  .brand small { display: block; font-size: 13px; font-weight: 400; color: #94a3b8; letter-spacing: 2px; }
+  .tagline { margin-left: auto; text-align: right; font-size: 14px; color: #94a3b8; line-height: 1.6; }
+  .tagline b { color: #fbbf24; font-weight: 600; }
+
+  /* Bento grid */
+  .bento {
+    display: grid; flex: 1; gap: 20px;
+    grid-template-columns: 1.25fr 1fr;
+    grid-template-rows: 1.1fr 1fr;
+  }
+  /* 玻璃卡片 */
+  .glass {
+    border-radius: 24px;
+    background: rgba(255,255,255,.055);
+    border: 1px solid rgba(255,255,255,.10);
+    backdrop-filter: blur(22px) saturate(1.3);
+    -webkit-backdrop-filter: blur(22px) saturate(1.3);
+    box-shadow: 0 20px 50px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
+    padding: 28px 30px;
+    display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+  }
+  .glass::after { /* 顶部高光 */
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+  }
+  .card-label {
+    font-size: 12px; font-weight: 600; letter-spacing: 2.5px;
+    color: #64748b; text-transform: uppercase; margin-bottom: 14px;
+  }
+
+  /* 大卡片：搜索 mockup */
+  .card-search { grid-row: 1 / 3; }
+  .search-bar {
+    display: flex; gap: 10px; margin-bottom: 22px;
+  }
+  .search-bar .field {
+    flex: 1; background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12); border-radius: 14px;
+    padding: 14px 18px; font-size: 15px; color: #e2e8f0;
+  }
+  .search-bar .field .ph { color: #64748b; font-size: 14px; }
+  .search-bar .field .ic { margin-right: 10px; opacity: .6; }
+  .search-bar .city { flex: 0 0 130px; }
+  .search-bar .btn {
+    background: linear-gradient(135deg, #ff7a1a, #ff9a3d);
+    border: none; border-radius: 14px; padding: 0 26px;
+    color: #fff; font-size: 15px; font-weight: 700;
+    box-shadow: 0 10px 26px rgba(255,122,26,.4);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .result {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px; padding: 16px 18px; margin-bottom: 12px;
+  }
+  .result .name { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .result .badge { font-size: 11px; padding: 3px 9px; border-radius: 99px; background: rgba(56,189,248,.15); color: #7dd3fc; }
+  .result .addr { font-size: 13px; color: #94a3b8; margin-top: 6px; }
+  .result .meta { display: flex; gap: 10px; margin-top: 8px; font-size: 12px; color: #64748b; }
+  .result .chip {
+    font-size: 11px; padding: 4px 10px; border-radius: 8px;
+    background: rgba(255,122,26,.14); color: #fbbf24;
+  }
+  .result .actions { display: flex; gap: 8px; margin-top: 12px; }
+  .mini-btn {
+    flex: 1; text-align: center; font-size: 12.5px; font-weight: 600;
+    padding: 9px 0; border-radius: 10px;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.10); color: #cbd5e1;
+  }
+  .mini-btn.primary { background: rgba(255,122,26,.2); border-color: rgba(255,122,26,.35); color: #ffb25e; }
+
+  /* 小卡片：功能点 */
+  .feat { display: flex; gap: 16px; align-items: flex-start; }
+  .feat-ic {
+    width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.10);
+  }
+  .feat h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .feat p { font-size: 12.5px; color: #94a3b8; line-height: 1.55; }
+  .feat .accent { color: #fbbf24; }
+
+  /* 底部信息条 */
+  .foot {
+    margin-top: 20px; display: flex; align-items: center; gap: 12px;
+    font-size: 12px; color: #64748b;
+  }
+  .foot .dot { width: 6px; height: 6px; border-radius: 99px; background: #34d399; box-shadow: 0 0 8px #34d399; }
+  .foot .perm { padding: 3px 10px; border-radius: 99px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); }
+</style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="grid-overlay"></div>
+  <div class="wrap">
+    <div class="top">
+      <div class="logo">🗺️</div>
+      <div class="brand">找地方<small>AMAP SEARCH</small></div>
+      <div class="tagline">
+        Search Amap POIs — <b>copy the address</b><br>or <b>add to your trip</b> in one tap
+      </div>
+    </div>
+
+    <div class="bento">
+      <!-- 大卡片：搜索界面 mockup -->
+      <div class="glass card-search">
+        <div class="card-label">POI Search</div>
+        <div class="search-bar">
+          <div class="field"><span class="ic">🔍</span><span class="ph">故宫 / 长城 / 西湖</span></div>
+          <div class="field city"><span class="ic">📍</span><span class="ph">城市</span></div>
+          <div class="btn">搜索</div>
+        </div>
+        <div class="result">
+          <div class="name">开元寺 <span class="badge">景点</span></div>
+          <div class="addr">中国 福建省 泉州市 鲤城区 西街176号</div>
+          <div class="meta"><span>📍 118.581, 24.917</span><span class="chip">🔗 地图链接</span></div>
+          <div class="actions"><div class="mini-btn">📋 复制地址</div><div class="mini-btn primary">➕ 添加进行程</div></div>
+        </div>
+        <div class="result" style="margin-bottom:0">
+          <div class="name">白苔 PURE WHITE <span class="badge">购物</span></div>
+          <div class="addr">中国 福建省 泉州市 鲤城区 南俊北路37号</div>
+          <div class="meta"><span>📍 118.596, 24.913</span><span>📞 0595-xxxx</span></div>
+        </div>
+      </div>
+
+      <!-- 右上：复制地址 -->
+      <div class="glass">
+        <div class="card-label">Copy</div>
+        <div class="feat">
+          <div class="feat-ic">📋</div>
+          <div>
+            <h3>复制完整信息</h3>
+            <p>名称 · 街道 · 城市 · 国家<br>经纬度 · 高德地图链接</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右下：添加进行程 -->
+      <div class="glass">
+        <div class="card-label">Add to Trip</div>
+        <div class="feat">
+          <div class="feat-ic">➕</div>
+          <div>
+            <h3>一键写入行程</h3>
+            <p>坐标 <span class="accent">→ 地图</span> · 电话 <span class="accent">→ 备注</span><br>地图链接自动存入「网站」</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span class="dot"></span> TREK trip-page plugin · 3 permissions · Free · Amap Web Service API
+      <span class="perm" style="margin-left:auto">🚀 v1.0.1</span>
+    </div>
+  </div>
+</body>
+</html>

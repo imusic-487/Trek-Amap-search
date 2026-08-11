@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1600px; height: 900px; display: flex; font-family: "WenQuanYi Zen Hei", "PingFang SC", sans-serif; overflow: hidden; }
+
+  /* ============ 左半：亮色主题 ============ */
+  .light {
+    width: 800px; height: 900px; position: relative; padding: 40px 36px;
+    background:
+      radial-gradient(400px 300px at 20% 15%, rgba(255,122,26,.14), transparent 65%),
+      radial-gradient(450px 350px at 85% 85%, rgba(56,189,248,.12), transparent 65%),
+      linear-gradient(160deg, #f6f8fc 0%, #eef2f9 100%);
+    color: #0f172a;
+  }
+  .light .grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(15,23,42,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(15,23,42,.04) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+  .glass-light {
+    border-radius: 20px;
+    background: rgba(255,255,255,.62);
+    border: 1px solid rgba(255,255,255,.9);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    box-shadow: 0 16px 40px rgba(15,23,42,.10), inset 0 1px 0 rgba(255,255,255,.9);
+    padding: 22px 24px;
+    position: relative;
+  }
+
+  /* ============ 右半：暗色主题 ============ */
+  .dark {
+    width: 800px; height: 900px; position: relative; padding: 40px 36px;
+    background:
+      radial-gradient(400px 300px at 20% 15%, rgba(255,122,26,.20), transparent 65%),
+      radial-gradient(450px 350px at 85% 85%, rgba(56,189,248,.16), transparent 65%),
+      linear-gradient(160deg, #0b1120 0%, #111a33 60%, #0c1f26 100%);
+    color: #e2e8f0;
+  }
+  .dark .grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(148,163,184,.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148,163,184,.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+  .glass-dark {
+    border-radius: 20px;
+    background: rgba(255,255,255,.055);
+    border: 1px solid rgba(255,255,255,.10);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    box-shadow: 0 16px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
+    padding: 22px 24px;
+    position: relative;
+  }
+  .glass-light::after, .glass-dark::after {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent);
+  }
+
+  /* 主题徽标 */
+  .theme-tag {
+    position: absolute; top: 26px; left: 36px; z-index: 2;
+    font-size: 11px; font-weight: 700; letter-spacing: 3px;
+    padding: 6px 14px; border-radius: 99px;
+  }
+  .light .theme-tag { background: rgba(15,23,42,.08); color: #475569; }
+  .dark .theme-tag { background: rgba(255,255,255,.08); color: #94a3b8; }
+
+  /* 品牌行 */
+  .brand { display: flex; align-items: center; gap: 12px; margin: 26px 0 20px; }
+  .logo {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: linear-gradient(135deg, #ff7a1a, #ffb25e);
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+    box-shadow: 0 8px 20px rgba(255,122,26,.35);
+  }
+  .brand-name { font-size: 20px; font-weight: 700; }
+  .brand-name small { display: block; font-size: 10px; font-weight: 400; letter-spacing: 2px; opacity: .55; }
+  .brand .tag { margin-left: auto; font-size: 11px; padding: 4px 10px; border-radius: 99px; }
+  .light .brand .tag { background: rgba(15,23,42,.06); color: #64748b; }
+  .dark .brand .tag { background: rgba(255,255,255,.07); color: #94a3b8; }
+
+  /* 搜索栏 */
+  .search-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+  .field { flex: 1; border-radius: 12px; padding: 12px 14px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+  .light .field { background: rgba(255,255,255,.75); border: 1px solid rgba(15,23,42,.08); color: #94a3b8; }
+  .dark .field { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); color: #64748b; }
+  .field.city { flex: 0 0 92px; }
+  .btn {
+    border-radius: 12px; padding: 0 18px; font-size: 13px; font-weight: 700; color: #fff;
+    background: linear-gradient(135deg, #ff7a1a, #ff9a3d);
+    display: flex; align-items: center; gap: 6px;
+    box-shadow: 0 8px 20px rgba(255,122,26,.4);
+  }
+
+  /* 结果 */
+  .result { border-radius: 14px; padding: 13px 15px; margin-bottom: 10px; }
+  .light .result { background: rgba(255,255,255,.55); border: 1px solid rgba(15,23,42,.06); }
+  .dark .result { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); }
+  .r-name { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 99px; }
+  .light .badge { background: rgba(56,189,248,.15); color: #0284c7; }
+  .dark .badge { background: rgba(56,189,248,.15); color: #7dd3fc; }
+  .r-addr { font-size: 12px; margin-top: 5px; }
+  .light .r-addr { color: #64748b; } .dark .r-addr { color: #94a3b8; }
+  .r-meta { display: flex; gap: 8px; margin-top: 7px; font-size: 11px; align-items: center; }
+  .light .r-meta { color: #94a3b8; } .dark .r-meta { color: #64748b; }
+  .chip { font-size: 10px; padding: 3px 8px; border-radius: 7px; }
+  .light .chip { background: rgba(255,122,26,.12); color: #c2410c; }
+  .dark .chip { background: rgba(255,122,26,.14); color: #fbbf24; }
+  .r-actions { display: flex; gap: 7px; margin-top: 10px; }
+  .mini { flex: 1; text-align: center; font-size: 11px; font-weight: 600; padding: 8px 0; border-radius: 9px; }
+  .light .mini { background: rgba(15,23,42,.05); border: 1px solid rgba(15,23,42,.07); color: #475569; }
+  .dark .mini { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.10); color: #cbd5e1; }
+  .mini.primary { background: rgba(255,122,26,.18); border-color: rgba(255,122,26,.4); }
+  .light .mini.primary { color: #c2410c; } .dark .mini.primary { color: #ffb25e; }
+
+  /* 功能行（bento 底部两小卡） */
+  .feats { display: flex; gap: 10px; margin-top: 12px; }
+  .feat { flex: 1; border-radius: 14px; padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start; }
+  .light .feat { background: rgba(255,255,255,.55); border: 1px solid rgba(15,23,42,.06); }
+  .dark .feat { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); }
+  .feat-ic { font-size: 17px; }
+  .feat h4 { font-size: 12.5px; font-weight: 700; margin-bottom: 2px; }
+  .feat p { font-size: 10.5px; line-height: 1.5; }
+  .light .feat p { color: #64748b; } .dark .feat p { color: #94a3b8; }
+  .light .feat .accent { color: #c2410c; } .dark .feat .accent { color: #fbbf24; }
+
+  /* 分隔线 */
+  .divider { width: 2px; background: rgba(148,163,184,.2); position: relative; z-index: 3; }
+</style>
+</head>
+<body>
+  <!-- 左：亮色 -->
+  <div class="light">
+    <div class="grid"></div>
+    <div class="theme-tag">LIGHT</div>
+    <div class="brand">
+      <div class="logo">🗺️</div>
+      <div class="brand-name">找地方<small>AMAP SEARCH</small></div>
+      <div class="tag">Light theme</div>
+    </div>
+    <div class="glass-light">
+      <div class="search-bar">
+        <div class="field">🔍 故宫 / 长城 / 西湖</div>
+        <div class="field city">📍 城市</div>
+        <div class="btn">搜索</div>
+      </div>
+      <div class="result">
+        <div class="r-name">开元寺 <span class="badge">景点</span></div>
+        <div class="r-addr">中国 福建省 泉州市 鲤城区 西街176号</div>
+        <div class="r-meta"><span>📍 118.581, 24.917</span><span class="chip">🔗 地图链接</span></div>
+        <div class="r-actions"><div class="mini">📋 复制地址</div><div class="mini primary">➕ 添加进行程</div></div>
+      </div>
+      <div class="result" style="margin-bottom:0">
+        <div class="r-name">白苔 PURE WHITE <span class="badge">购物</span></div>
+        <div class="r-addr">中国 福建省 泉州市 鲤城区 南俊北路37号</div>
+        <div class="r-meta"><span>📍 118.596, 24.913</span><span>📞 0595-xxxx</span></div>
+      </div>
+    </div>
+    <div class="feats">
+      <div class="feat"><div class="feat-ic">📋</div><div><h4>复制完整信息</h4><p>地址 · 经纬度 · 地图链接</p></div></div>
+      <div class="feat"><div class="feat-ic">➕</div><div><h4>一键写入行程</h4><p>坐标→地图 · 电话→备注</p></div></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 右：暗色 -->
+  <div class="dark">
+    <div class="grid"></div>
+    <div class="theme-tag">DARK</div>
+    <div class="brand">
+      <div class="logo">🗺️</div>
+      <div class="brand-name">找地方<small>AMAP SEARCH</small></div>
+      <div class="tag">Dark theme</div>
+    </div>
+    <div class="glass-dark">
+      <div class="search-bar">
+        <div class="field">🔍 故宫 / 长城 / 西湖</div>
+        <div class="field city">📍 城市</div>
+        <div class="btn">搜索</div>
+      </div>
+      <div class="result">
+        <div class="r-name">开元寺 <span class="badge">景点</span></div>
+        <div class="r-addr">中国 福建省 泉州市 鲤城区 西街176号</div>
+        <div class="r-meta"><span>📍 118.581, 24.917</span><span class="chip">🔗 地图链接</span></div>
+        <div class="r-actions"><div class="mini">📋 复制地址</div><div class="mini primary">➕ 添加进行程</div></div>
+      </div>
+      <div class="result" style="margin-bottom:0">
+        <div class="r-name">白苔 PURE WHITE <span class="badge">购物</span></div>
+        <div class="r-addr">中国 福建省 泉州市 鲤城区 南俊北路37号</div>
+        <div class="r-meta"><span>📍 118.596, 24.913</span><span>📞 0595-xxxx</span></div>
+      </div>
+    </div>
+    <div class="feats">
+      <div class="feat"><div class="feat-ic">📋</div><div><h4>复制完整信息</h4><p>地址 · 经纬度 · 地图链接</p></div></div>
+      <div class="feat"><div class="feat-ic">➕</div><div><h4>一键写入行程</h4><p>坐标→地图 · 电话→备注</p></div></div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "id": "amap-search",
+  "name": "高德搜索",
+  "description": "在 TREK 里直接搜索高德 POI，一键复制地址或添加进当前行程（自动带坐标/地图链接/电话）。",
+  "author": "imusic-487",
+  "version": "1.0.1",
+  "apiVersion": 1,
+  "trek": ">=3.4.0 <4.0.0",
+  "type": "trip-page",
+  "permissions": [
+    "db:read:trips",
+    "db:write:places",
+    "http:outbound:restapi.amap.com"
+  ],
+  "egress": [
+    "restapi.amap.com"
+  ],
+  "settings": [
+    {
+      "key": "amap_key",
+      "scope": "user",
+      "label": "高德 Web 服务 Key",
+      "placeholder": "申请自 console.amap.com（Web服务类型）",
+      "required": true,
+      "secret": true
+    }
+  ]
+}

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- trek:ui -->
+    <title>找地方</title>
+  </head>
+  <body>
+    <div class="trek-card" style="max-width: 720px; margin: 0 auto; padding: 16px">
+      <h2 class="trek-h2" style="margin-top: 0">🗺️ 找地方</h2>
+
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <input id="q" class="trek-input" placeholder="搜索关键词，如：故宫 / 长城 / 西湖" style="flex: 2; min-width: 200px" />
+        <input id="city" class="trek-input" placeholder="城市" style="flex: 1; min-width: 100px" />
+        <button id="btn-search" class="trek-btn trek-btn--primary">搜索</button>
+      </div>
+
+      <div id="results" style="margin-top: 16px"></div>
+
+      <div style="margin-top: 20px; padding: 10px 12px; font-size: 12px; opacity: 0.65; border-top: 1px solid var(--trek-border, rgba(128,128,128,0.25))">
+        💡 添加后：高德地图链接自动存入地点「网站」，点击对应地点后底部的“打开链接”即可跳转至高德地图；如需补充其他链接（官网/小红书/抖音等），编辑该地点的「备注」即可，一行一个。<br />
+        <span id="key-hint" style="display:none">🔑 还没有 Key？前往高德开放平台申请（选择「Web 服务」类型），个人开发者免费额度 50 万次/天。</span>
+      </div>
+    </div>
+
+    <script>
+      // 高德搜索插件 UI - trip-page 类型：显示在当前行程顶部导航，context 自带 tripId
+      // 文档依据: TREK Plugin-Development wiki (window.trek bridge + trek:context 字段表)
+      //   - trip-page: "it receives the current tripId in trek:context"
+      //   - context.tripId: string | null — compare with String(id)
+      let tripId = null
+
+      trek.onContext((ctx) => {
+        tripId = ctx && ctx.tripId ? String(ctx.tripId) : null
+      })
+
+      // Key 引导语智能显隐：有 Key 或搜索成功过就不显示
+      async function refreshKeyHint(hide) {
+        const hint = document.getElementById('key-hint')
+        if (!hint) return
+        if (hide) { hint.style.display = 'none'; return }
+        try {
+          const data = await trek.invoke('/key-status')
+          hint.style.display = (data && data.hasKey) ? 'none' : 'block'
+        } catch (e) {
+          hint.style.display = 'block' // 拿不到状态就显示引导
+        }
+      }
+      refreshKeyHint()
+
+      // 生成完整地址：中国 + 省 + 市 + 区 + 街道
+      function fullAddress(p) {
+        return ['中国', p.pname, p.cityname, p.adname, p.address].filter(Boolean).join('')
+      }
+
+      // 复制文本到剪贴板
+      async function copyText(text) {
+        try {
+          await navigator.clipboard.writeText(text)
+          trek.notify('success', '已复制：' + text.slice(0, 30) + (text.length > 30 ? '…' : ''))
+        } catch (e) {
+          // fallback
+          const ta = document.createElement('textarea')
+          ta.value = text
+          document.body.appendChild(ta)
+          ta.select()
+          document.execCommand('copy')
+          document.body.removeChild(ta)
+          trek.notify('success', '已复制')
+        }
+      }
+
+      async function doSearch() {
+        const q = document.getElementById('q').value.trim()
+        const city = document.getElementById('city').value.trim()
+        if (!q) { trek.notify('warning', '请输入关键词'); return }
+        const box = document.getElementById('results')
+        box.innerHTML = '<p style="opacity:0.6">搜索中…</p>'
+        try {
+          const url = '/search?q=' + encodeURIComponent(q) + (city ? '&city=' + encodeURIComponent(city) : '')
+          const data = await trek.invoke(url)
+          if (!data.ok) {
+            if (/key|Key|key/i.test(data.error || '')) { refreshKeyHint(false) }
+            box.innerHTML = `<p style="color:var(--trek-danger,#ef4444)">${data.error || '搜索失败'}</p>`
+            return
+          }
+          refreshKeyHint(true) // 搜索成功 → 说明有 Key，隐藏引导
+          if (!data.pois || data.pois.length === 0) {
+            box.innerHTML = '<p style="opacity:0.6">无结果，试试换关键词或加城市</p>'
+            return
+          }
+          box.innerHTML = data.pois.map((p, i) => {
+            const addr = fullAddress(p)
+            const ll = p.location || ''
+            return `
+            <div class="trek-card" style="padding:10px 12px; margin-bottom:8px">
+              <div style="font-weight:600">${p.name}</div>
+              <div style="font-size:12px; opacity:0.7; margin-top:2px">📍 ${addr}${ll ? '（' + ll + '）' : ''}</div>
+              <div style="font-size:12px; opacity:0.5; margin-top:2px">${p.type || ''}${p.tel ? ' · ☎ ' + p.tel : ''}</div>
+              <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap">
+                <button class="trek-btn trek-btn--secondary" data-copy="${i}" style="flex:1">📋 复制地址</button>
+                <button class="trek-btn trek-btn--primary" data-add="${i}" style="flex:1">➕ 添加进行程</button>
+              </div>
+            </div>
+          `}).join('')
+
+          // 复制地址
+          box.querySelectorAll('button[data-copy]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const p = data.pois[Number(btn.dataset.copy)]
+              const addr = fullAddress(p)
+              const amapLink = p.id ? `https://www.amap.com/place/${p.id}` : ''
+              const text = `${p.name}\n${addr}\n经纬度: ${p.location || '无'}${amapLink ? '\n地图: ' + amapLink : ''}\n类型: ${p.type || ''}${p.tel ? '\n电话: ' + p.tel : ''}`
+              copyText(text)
+            })
+          })
+
+          // 添加进当前行程
+          box.querySelectorAll('button[data-add]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const poi = data.pois[Number(btn.dataset.add)]
+              if (!tripId) { trek.notify('error', '未检测到当前行程'); return }
+              btn.disabled = true; btn.textContent = '添加中…'
+              try {
+                const res = await trek.invoke('/add', {
+                  method: 'POST',
+                  body: JSON.stringify({ tripId: Number(tripId), place: poi }),
+                })
+                if (res.ok) {
+                  trek.notify('success', `已添加「${poi.name}」到行程`)
+                  btn.textContent = '✅ 已添加'
+                  btn.style.opacity = '0.6'
+                } else {
+                  trek.notify('error', res.error || '添加失败')
+                  btn.disabled = false; btn.textContent = '➕ 添加进行程'
+                }
+              } catch (e) {
+                trek.notify('error', '请求失败: ' + e.message)
+                btn.disabled = false; btn.textContent = '➕ 添加进行程'
+              }
+            })
+          })
+        } catch (e) {
+          box.innerHTML = `<p style="color:var(--trek-danger,#ef4444)">请求异常: ${e.message}</p>`
+        }
+      }
+
+      document.getElementById('btn-search').addEventListener('click', doSearch)
+      document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch() })
+    </script>
+  </body>
+</html>
