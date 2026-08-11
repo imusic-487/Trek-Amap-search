@@ -1,23 +1,14 @@
-### AL ###
-#Template for AL projects for Dynamics 365 Business Central
-#launch.json folder
-.vscode/
-#Cache folder
-.alcache/
-#Symbols folder
-.alpackages/
-#Snapshots folder
-.snapshots/
-#Testing Output folder
-.output/
-#Extension App-file
-*.app
-#Rapid Application Development File
-rad.json
-#Translation Base-file
-*.g.xlf
-#License-files
-*.bclicense
-*.flf
-#Test results file
-TestResults.xml
+# Node
+node_modules/
+npm-debug.log*
+
+# Build artifacts（打包产物不入库，registry 从 GitHub Release 拉 zip）
+plugin.zip
+*.tgz
+
+# TREK SDK 本地开发数据
+.trek-dev/
+
+# 临时截图/渲染脚本（docs 下的正式截图保留）
+shot_*.js
+*.log
