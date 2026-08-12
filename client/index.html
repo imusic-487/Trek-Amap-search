@@ -106,17 +106,20 @@
         return parts[parts.length - 1] || ''
       }
 
-      // v1.1: 评分/人均显示
+      // v1.1: 评分/人均显示（高德可能返回数组/空值，统一容错）
       function ratingText(p) {
-        return p.rating && p.rating !== '0' ? p.rating : ''
+        const r = Number(p.rating)
+        return Number.isFinite(r) && r > 0 ? String(r) : ''
       }
       function costText(p) {
-        return p.cost && p.cost !== '0' ? '¥' + p.cost : ''
+        const c = Number(p.cost)
+        return Number.isFinite(c) && c > 0 ? '¥' + c : ''
       }
-      // v1.1: 营业时间精简——取第一段
+      // v1.1: 营业时间精简——高德 opentime2 可能是数组或字符串，先归一到字符串
       function openTimeText(p) {
         if (!p.opentime) return ''
-        const first = p.opentime.split('；')[0].split(';')[0].trim()
+        const raw = Array.isArray(p.opentime) ? p.opentime.join('；') : String(p.opentime)
+        const first = raw.split('；')[0].split(';')[0].trim()
         return first.length > 24 ? first.slice(0, 24) + '…' : first
       }
 

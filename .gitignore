@@ -12,3 +12,5 @@ plugin.zip
 # 临时截图/渲染脚本（docs 下的正式截图保留）
 shot_*.js
 *.log
+
+dev-fixtures.json
