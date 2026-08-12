@@ -46,6 +46,8 @@ This plugin is positioned differently:
 - **Ready to use now**: until the official work lands, this plugin is the immediately usable Amap search option for TREK; once it does, its search capability remains complementary
 - **Independent**: the plugin does not depend on the official roadmap or its timeline
 
+> ⚠️ **Compliance note**: The coordinate conversion in this plugin only corrects the display offset between Amap's GCJ-02 and OpenStreetMap's WGS-84, so places appear at their true location on the trip map. Please review and comply with the laws and regulations of your jurisdiction before use.
+
 ## Screenshots
 
 ![Light theme](docs/screenshot.png)
