@@ -6,7 +6,7 @@
 
 ![找地方 — cover](docs/cover.jpg)
 
-## 功能
+## What it does · 功能
 
 **找地方** 以 **trip-page** 类型挂在行程规划器内部（TREK 3.4+），始终跟随当前打开的行程。搜索高德上的任意地点，然后复制详情或直接写进行程。
 
@@ -31,7 +31,7 @@ TREK 自带的搜索用的是 OpenStreetMap，找地标没问题，但找那些�
 
 唯一要求是一个高德 Web 服务 API Key（[console.amap.com](https://console.amap.com/)）。个人开发者配额每天 50 万次调用——注册可能需要中国手机号，但拿到 Key 之后，搜中国地点比只用 OSM 容易太多了。
 
-## 截图
+## Screenshots · 截图
 
 ![亮色主题](docs/screenshot.png)
 
@@ -41,7 +41,7 @@ TREK 自带的搜索用的是 OpenStreetMap，找地标没问题，但找那些�
 
 插件界面自动跟随 TREK 的亮/暗主题。
 
-## 权限
+## Permissions · 权限
 
 激活时 TREK 会向管理员展示此列表。本插件只申请三个权限，且仅与高德搜索接口通信。
 
@@ -51,7 +51,7 @@ TREK 自带的搜索用的是 OpenStreetMap，找地标没问题，但找那些�
 | `db:write:places` | 在行程中创建地点 |
 | `http:outbound:restapi.amap.com` | 调用高德 POI 搜索接口（服务端，唯一网络请求） |
 
-## 安装配置
+## Setup · 安装配置
 
 ### 1. 安装
 
