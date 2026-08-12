@@ -44,6 +44,8 @@
           width: 40px;
         }
         .poi-actions .trek-btn { width: 40px; height: 40px; flex: none; padding: 0; font-size: 16px; }
+        .poi-actions .btn-icon { display: flex; align-items: center; justify-content: center; }
+        .poi-actions .btn-icon svg { width: 18px; height: 18px; }
         .poi-actions .btn-label { display: none; }
       }
       .sort-row { display: flex; gap: 6px; margin-top: 10px; }
@@ -196,6 +198,10 @@
         }
       }
 
+      // v1.1.8: Lucide 图标（与 TREK 设计语言对齐，ISC 许可内联 SVG）
+      const ICON_COPY = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>'
+      const ICON_ADD = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>'
+
       // v1.1: 渲染结果（含排序后）
       function renderResults(pois) {
         const box = document.getElementById('results')
@@ -234,8 +240,8 @@
                 <div style="font-size:12px; opacity:0.5; margin-top:2px">${p.business_area ? p.business_area + ' · ' : ''}${p.tel ? '☎ ' + p.tel : ''}</div>
               </div>
               <div class="poi-actions">
-                <button class="trek-btn trek-btn--secondary" data-copy="${i}" title="复制地址"><span class="btn-icon">📄</span><span class="btn-label">复制地址</span></button>
-                <button class="trek-btn trek-btn--primary" data-add="${i}" title="添加进行程"><span class="btn-icon">➕</span><span class="btn-label">添加进行程</span></button>
+                <button class="trek-btn trek-btn--secondary" data-copy="${i}" title="复制地址"><span class="btn-icon">${ICON_COPY}</span><span class="btn-label">复制地址</span></button>
+                <button class="trek-btn trek-btn--primary" data-add="${i}" title="添加进行程"><span class="btn-icon">${ICON_ADD}</span><span class="btn-label">添加进行程</span></button>
               </div>
             </div>
           `
