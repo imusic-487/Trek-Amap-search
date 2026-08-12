@@ -71,8 +71,44 @@ module.exports = definePlugin({
           pname: p.pname || '',
           cityname: p.cityname || '',
           adname: p.adname || '',
+          // v1.1 扩展字段（extensions=all 实测全有）
+          keytag: p.keytag || '',
+          typecode: p.typecode || '',
+          entr_location: p.entr_location || '',
+          business_area: p.business_area || '',
+          website: p.website || '',
+          rating: (p.biz_ext && p.biz_ext.rating) || '',
+          cost: (p.biz_ext && p.biz_ext.cost) || '',
+          opentime: (p.biz_ext && (p.biz_ext.opentime2 || p.biz_ext.open_time)) || '',
+          photos: (p.photos || []).map(ph => ph.url).filter(Boolean).slice(0, 3),
         }))
         return json({ ok: true, count: data.count, pois })
+      },
+    },
+
+    // 行程地点锚点（供客户端距离排序）：返回行程内第一个有坐标的地点
+    // GET /api/plugins/amap-search/trip-anchor?tripId=123
+    {
+      method: 'GET',
+      path: '/trip-anchor',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = req.query && req.query.tripId
+        if (!tripId) {
+          return json({ ok: false, error: '缺少 tripId' })
+        }
+        try {
+          const places = await ctx.places.list(Number(tripId))
+          const anchor = (places || []).find(p =>
+            Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng))
+          )
+          return json({
+            ok: true,
+            anchor: anchor ? { name: anchor.name, lat: Number(anchor.lat), lng: Number(anchor.lng) } : null,
+          })
+        } catch (e) {
+          return json({ ok: false, error: `读取行程地点失败: ${e.message}` })
+        }
       },
     },
 

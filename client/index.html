@@ -5,37 +5,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- trek:ui -->
     <title>找地方</title>
+    <style>
+      /* v1.1: 移动端适配 + 卡片增强样式 */
+      @media (max-width: 640px) {
+        .search-row { flex-direction: column !important; }
+        .search-row .trek-input { min-width: 0 !important; width: 100%; }
+        .search-row .trek-btn { width: 100%; }
+        .poi-card { flex-direction: column !important; }
+        .poi-thumb { width: 100% !important; height: 140px !important; }
+        .sort-row { flex-wrap: wrap; }
+      }
+      .poi-card { display: flex; gap: 12px; }
+      .poi-thumb {
+        width: 96px; height: 96px; border-radius: 8px; flex-shrink: 0;
+        object-fit: cover; background: var(--trek-border, rgba(128,128,128,0.15));
+        display: flex; align-items: center; justify-content: center;
+        font-size: 32px; color: var(--trek-border, rgba(128,128,128,0.6));
+      }
+      .poi-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; display: block; }
+      .poi-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+      .poi-tag {
+        font-size: 11px; padding: 1px 8px; border-radius: 10px;
+        background: var(--trek-border, rgba(128,128,128,0.15));
+        color: var(--trek-text, inherit); opacity: 0.85;
+      }
+      .poi-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; font-size: 12px; }
+      .poi-meta span { opacity: 0.75; }
+      .poi-rating { color: #f59e0b; opacity: 1 !important; font-weight: 600; }
+      .sort-row { display: flex; gap: 6px; margin-top: 10px; }
+      .sort-btn { font-size: 12px; padding: 3px 10px; opacity: 0.7; }
+      .sort-btn.active { opacity: 1; border-color: var(--trek-primary, #3b82f6); color: var(--trek-primary, #3b82f6); }
+    </style>
   </head>
   <body>
     <div class="trek-card" style="max-width: 720px; margin: 0 auto; padding: 16px">
       <h2 class="trek-h2" style="margin-top: 0">🗺️ 找地方</h2>
 
-      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+      <div class="search-row" style="display: flex; gap: 8px; flex-wrap: wrap">
         <input id="q" class="trek-input" placeholder="搜索关键词，如：故宫 / 长城 / 西湖" style="flex: 2; min-width: 200px" />
         <input id="city" class="trek-input" placeholder="城市" style="flex: 1; min-width: 100px" />
         <button id="btn-search" class="trek-btn trek-btn--primary">搜索</button>
+      </div>
+
+      <div class="sort-row" id="sort-row" style="display:none">
+        <span style="font-size:12px; opacity:0.6; align-self:center">排序</span>
+        <button class="trek-btn trek-btn--secondary sort-btn" data-sort="rating">⭐ 评分</button>
+        <button class="trek-btn trek-btn--secondary sort-btn" data-sort="distance">📍 距离</button>
+        <button class="trek-btn trek-btn--secondary sort-btn" data-sort="cost">💰 人均</button>
+        <button class="trek-btn trek-btn--secondary sort-btn" data-sort="default">默认</button>
       </div>
 
       <div id="results" style="margin-top: 16px"></div>
 
       <div style="margin-top: 20px; padding: 10px 12px; font-size: 12px; opacity: 0.65; border-top: 1px solid var(--trek-border, rgba(128,128,128,0.25))">
         💡 添加后：高德地图链接自动存入地点「网站」，点击对应地点后底部的“打开链接”即可跳转至高德地图；如需补充其他链接（官网/小红书/抖音等），编辑该地点的「备注」即可，一行一个。<br />
-        <span id="key-hint" style="display:none">🔑 还没有 Key？前往高德开放平台申请（选择「Web 服务」类型），个人开发者免费额度 50 万次/天。</span>
+        <span id="key-hint" style="display:none">🔑 还没有 Key？前往高德开放平台申请（选择「Web 服务」类型），个人开发者配额 50 万次/天。</span>
       </div>
     </div>
 
     <script>
       // 高德搜索插件 UI - trip-page 类型：显示在当前行程顶部导航，context 自带 tripId
-      // 文档依据: TREK Plugin-Development wiki (window.trek bridge + trek:context 字段表)
-      //   - trip-page: "it receives the current tripId in trek:context"
-      //   - context.tripId: string | null — compare with String(id)
       let tripId = null
+      let currentPois = []       // v1.1: 缓存搜索结果，供客户端排序
+      let currentSort = 'default'
+      let anchor = null          // v1.1: 距离排序锚点（行程内第一个有坐标的地点）
 
       trek.onContext((ctx) => {
         tripId = ctx && ctx.tripId ? String(ctx.tripId) : null
+        if (tripId) loadAnchor()
       })
 
-      // Key 引导语智能显隐：有 Key 或搜索成功过就不显示
+      // v1.1: 拉取行程锚点（第一个有坐标的地点），供距离排序
+      async function loadAnchor() {
+        if (!tripId) { anchor = null; return }
+        try {
+          const res = await trek.invoke('/trip-anchor?tripId=' + encodeURIComponent(tripId))
+          anchor = res && res.ok ? res.anchor : null
+        } catch (e) { anchor = null }
+      }
+
       async function refreshKeyHint(hide) {
         const hint = document.getElementById('key-hint')
         if (!hint) return
@@ -43,24 +91,68 @@
         try {
           const data = await trek.invoke('/key-status')
           hint.style.display = (data && data.hasKey) ? 'none' : 'block'
-        } catch (e) {
-          hint.style.display = 'block' // 拿不到状态就显示引导
-        }
+        } catch (e) { hint.style.display = 'block' }
       }
       refreshKeyHint()
 
-      // 生成完整地址：中国 + 省 + 市 + 区 + 街道
       function fullAddress(p) {
         return ['中国', p.pname, p.cityname, p.adname, p.address].filter(Boolean).join('')
       }
 
-      // 复制文本到剪贴板
+      // v1.1: 类型解析——type 形如 "餐饮服务;咖啡厅;咖啡厅"，取最后一个作为小类
+      function typeClass(p) {
+        if (!p.type) return ''
+        const parts = p.type.split(';').filter(Boolean)
+        return parts[parts.length - 1] || ''
+      }
+
+      // v1.1: 评分/人均显示
+      function ratingText(p) {
+        return p.rating && p.rating !== '0' ? p.rating : ''
+      }
+      function costText(p) {
+        return p.cost && p.cost !== '0' ? '¥' + p.cost : ''
+      }
+      // v1.1: 营业时间精简——取第一段
+      function openTimeText(p) {
+        if (!p.opentime) return ''
+        const first = p.opentime.split('；')[0].split(';')[0].trim()
+        return first.length > 24 ? first.slice(0, 24) + '…' : first
+      }
+
+      // v1.1: 两点距离（km，Haversine）
+      function distanceKm(lat1, lng1, lat2, lng2) {
+        const R = 6371
+        const dLat = (lat2 - lat1) * Math.PI / 180
+        const dLng = (lng2 - lng1) * Math.PI / 180
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+      }
+      function poiDistKm(p) {
+        if (!anchor || !p.location) return null
+        const [lng, lat] = String(p.location).split(',').map(Number)
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+        return distanceKm(anchor.lat, anchor.lng, lat, lng)
+      }
+
+      // v1.1: 客户端排序
+      function sortedPois() {
+        const arr = currentPois.slice()
+        if (currentSort === 'rating') {
+          arr.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0))
+        } else if (currentSort === 'cost') {
+          arr.sort((a, b) => (Number(a.cost) || 0) - (Number(b.cost) || 0))
+        } else if (currentSort === 'distance') {
+          arr.sort((a, b) => (poiDistKm(a) ?? 99999) - (poiDistKm(b) ?? 99999))
+        }
+        return arr
+      }
+
       async function copyText(text) {
         try {
           await navigator.clipboard.writeText(text)
           trek.notify('success', '已复制：' + text.slice(0, 30) + (text.length > 30 ? '…' : ''))
         } catch (e) {
-          // fallback
           const ta = document.createElement('textarea')
           ta.value = text
           document.body.appendChild(ta)
@@ -69,6 +161,103 @@
           document.body.removeChild(ta)
           trek.notify('success', '已复制')
         }
+      }
+
+      // v1.1: 渲染结果（含排序后）
+      function renderResults(pois) {
+        const box = document.getElementById('results')
+        if (!pois || pois.length === 0) {
+          box.innerHTML = '<p style="opacity:0.6">无结果，试试换关键词或加城市</p>'
+          return
+        }
+        box.innerHTML = pois.map((p, i) => {
+          const addr = fullAddress(p)
+          const ll = p.location || ''
+          const photo = p.photos && p.photos[0]
+          const typeCls = typeClass(p)
+          const rating = ratingText(p)
+          const cost = costText(p)
+          const open = openTimeText(p)
+          const dist = poiDistKm(p)
+          const distTxt = dist != null ? ` · ${dist < 1 ? (dist*1000).toFixed(0)+'m' : dist.toFixed(1)+'km'}` : ''
+          return `
+            <div class="trek-card poi-card" style="padding:10px 12px; margin-bottom:8px">
+              <div class="poi-thumb">
+                ${photo ? `<img src="${photo}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.innerHTML='${emojiFor(typeCls)}'" />` : emojiFor(typeCls)}
+              </div>
+              <div style="flex:1; min-width:0">
+                <div style="font-weight:600">${p.name}</div>
+                <div class="poi-tags">
+                  ${typeCls ? `<span class="poi-tag">${typeCls}</span>` : ''}
+                  ${p.keytag ? `<span class="poi-tag">${p.keytag}</span>` : ''}
+                </div>
+                <div class="poi-meta">
+                  ${rating ? `<span class="poi-rating">⭐ ${rating}</span>` : ''}
+                  ${cost ? `<span>${cost}</span>` : ''}
+                  ${open ? `<span>🕐 ${open}</span>` : ''}
+                  ${distTxt ? `<span>${distTxt}</span>` : ''}
+                </div>
+                <div style="font-size:12px; opacity:0.7; margin-top:2px">📍 ${addr}${ll ? '（' + ll + '）' : ''}</div>
+                <div style="font-size:12px; opacity:0.5; margin-top:2px">${p.business_area ? p.business_area + ' · ' : ''}${p.tel ? '☎ ' + p.tel : ''}</div>
+                <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap">
+                  <button class="trek-btn trek-btn--secondary" data-copy="${i}" style="flex:1">📋 复制地址</button>
+                  <button class="trek-btn trek-btn--primary" data-add="${i}" style="flex:1">➕ 添加进行程</button>
+                </div>
+              </div>
+            </div>
+          `
+        }).join('')
+
+        // 复制地址
+        box.querySelectorAll('button[data-copy]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const p = pois[Number(btn.dataset.copy)]
+            const addr = fullAddress(p)
+            const amapLink = p.id ? `https://www.amap.com/place/${p.id}` : ''
+            const text = `${p.name}\n${addr}\n经纬度: ${p.location || '无'}${amapLink ? '\n地图: ' + amapLink : ''}\n类型: ${p.type || ''}${p.tel ? '\n电话: ' + p.tel : ''}${p.rating ? '\n评分: ' + p.rating : ''}${p.cost ? '\n人均: ¥' + p.cost : ''}`
+            copyText(text)
+          })
+        })
+
+        // 添加进当前行程
+        box.querySelectorAll('button[data-add]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const poi = pois[Number(btn.dataset.add)]
+            if (!tripId) { trek.notify('error', '未检测到当前行程'); return }
+            btn.disabled = true; btn.textContent = '添加中…'
+            try {
+              const res = await trek.invoke('/add', {
+                method: 'POST',
+                body: JSON.stringify({ tripId: Number(tripId), place: poi }),
+              })
+              if (res.ok) {
+                trek.notify('success', `已添加「${poi.name}」到行程`)
+                btn.textContent = '✅ 已添加'
+                btn.style.opacity = '0.6'
+              } else {
+                trek.notify('error', res.error || '添加失败')
+                btn.disabled = false; btn.textContent = '➕ 添加进行程'
+              }
+            } catch (e) {
+              trek.notify('error', '请求失败: ' + e.message)
+              btn.disabled = false; btn.textContent = '➕ 添加进行程'
+            }
+          })
+        })
+      }
+
+      // v1.1: 类型小类 → emoji 占位图（无缩略图时）
+      function emojiFor(typeCls) {
+        const map = {
+          '咖啡厅': '☕', '咖啡': '☕', '餐厅': '🍜', '中餐厅': '🍜', '火锅': '🍲',
+          '酒店': '🏨', '宾馆': '🏨', '景点': '🏛️', '博物馆': '🏛️', '公园': '🌳',
+          '购物': '🛍️', '商场': '🛍️', '超市': '🛒', '便利店': '🏪',
+          '酒吧': '🍸', 'KTV': '🎤', '电影院': '🎬', '书店': '📚', '图书馆': '📚',
+        }
+        for (const [k, v] of Object.entries(map)) {
+          if (typeCls && typeCls.includes(k)) return v
+        }
+        return '📍'
       }
 
       async function doSearch() {
@@ -85,66 +274,31 @@
             box.innerHTML = `<p style="color:var(--trek-danger,#ef4444)">${data.error || '搜索失败'}</p>`
             return
           }
-          refreshKeyHint(true) // 搜索成功 → 说明有 Key，隐藏引导
+          refreshKeyHint(true)
           if (!data.pois || data.pois.length === 0) {
             box.innerHTML = '<p style="opacity:0.6">无结果，试试换关键词或加城市</p>'
             return
           }
-          box.innerHTML = data.pois.map((p, i) => {
-            const addr = fullAddress(p)
-            const ll = p.location || ''
-            return `
-            <div class="trek-card" style="padding:10px 12px; margin-bottom:8px">
-              <div style="font-weight:600">${p.name}</div>
-              <div style="font-size:12px; opacity:0.7; margin-top:2px">📍 ${addr}${ll ? '（' + ll + '）' : ''}</div>
-              <div style="font-size:12px; opacity:0.5; margin-top:2px">${p.type || ''}${p.tel ? ' · ☎ ' + p.tel : ''}</div>
-              <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap">
-                <button class="trek-btn trek-btn--secondary" data-copy="${i}" style="flex:1">📋 复制地址</button>
-                <button class="trek-btn trek-btn--primary" data-add="${i}" style="flex:1">➕ 添加进行程</button>
-              </div>
-            </div>
-          `}).join('')
-
-          // 复制地址
-          box.querySelectorAll('button[data-copy]').forEach(btn => {
-            btn.addEventListener('click', () => {
-              const p = data.pois[Number(btn.dataset.copy)]
-              const addr = fullAddress(p)
-              const amapLink = p.id ? `https://www.amap.com/place/${p.id}` : ''
-              const text = `${p.name}\n${addr}\n经纬度: ${p.location || '无'}${amapLink ? '\n地图: ' + amapLink : ''}\n类型: ${p.type || ''}${p.tel ? '\n电话: ' + p.tel : ''}`
-              copyText(text)
-            })
-          })
-
-          // 添加进当前行程
-          box.querySelectorAll('button[data-add]').forEach(btn => {
-            btn.addEventListener('click', async () => {
-              const poi = data.pois[Number(btn.dataset.add)]
-              if (!tripId) { trek.notify('error', '未检测到当前行程'); return }
-              btn.disabled = true; btn.textContent = '添加中…'
-              try {
-                const res = await trek.invoke('/add', {
-                  method: 'POST',
-                  body: JSON.stringify({ tripId: Number(tripId), place: poi }),
-                })
-                if (res.ok) {
-                  trek.notify('success', `已添加「${poi.name}」到行程`)
-                  btn.textContent = '✅ 已添加'
-                  btn.style.opacity = '0.6'
-                } else {
-                  trek.notify('error', res.error || '添加失败')
-                  btn.disabled = false; btn.textContent = '➕ 添加进行程'
-                }
-              } catch (e) {
-                trek.notify('error', '请求失败: ' + e.message)
-                btn.disabled = false; btn.textContent = '➕ 添加进行程'
-              }
-            })
-          })
+          currentPois = data.pois
+          currentSort = 'default'
+          // v1.1: 有结果才显示排序栏
+          document.getElementById('sort-row').style.display = 'flex'
+          document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'))
+          renderResults(sortedPois())
         } catch (e) {
           box.innerHTML = `<p style="color:var(--trek-danger,#ef4444)">请求异常: ${e.message}</p>`
         }
       }
+
+      // v1.1: 排序按钮
+      document.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentSort = btn.dataset.sort
+          document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'))
+          btn.classList.add('active')
+          renderResults(sortedPois())
+        })
+      })
 
       document.getElementById('btn-search').addEventListener('click', doSearch)
       document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch() })
