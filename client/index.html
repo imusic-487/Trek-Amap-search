@@ -73,8 +73,23 @@
 
       trek.onContext((ctx) => {
         tripId = ctx && ctx.tripId ? String(ctx.tripId) : null
-        if (tripId) loadAnchor()
+        if (tripId) { loadAnchor(); loadCity() }
       })
+
+      // v1.1.5: 自动识别行程城市（标题→地点坐标→地址），填入城市输入框（用户可改）
+      async function loadCity() {
+        const cityInput = document.getElementById('city')
+        if (!cityInput || !tripId) return
+        try {
+          const res = await trek.invoke('/trip-city?tripId=' + encodeURIComponent(tripId))
+          if (res && res.ok && res.city) {
+            cityInput.value = res.city
+            cityInput.placeholder = res.city + '（自动识别，可修改）'
+          } else {
+            cityInput.placeholder = '未识别到城市，可手动填写'
+          }
+        } catch (e) { /* 忽略，保持现状 */ }
+      }
 
       // v1.1: 拉取行程锚点（第一个有坐标的地点），供距离排序
       async function loadAnchor() {
@@ -288,7 +303,10 @@
           if (defBtn) defBtn.classList.add('active')
           if (!data.pois || data.pois.length === 0) {
             document.getElementById('sort-row').style.display = 'none'
-            box.innerHTML = '<p style="opacity:0.6">无结果，试试换关键词或加城市</p>'
+            const cityVal = document.getElementById('city').value.trim()
+            box.innerHTML = cityVal
+              ? '<p style="opacity:0.6">无结果，试试换关键词或加城市</p>'
+              : '<p style="opacity:0.6">未识别到行程城市，试试手动填写城市，或在行程中添加一个地点后再搜</p>'
             return
           }
           document.getElementById('sort-row').style.display = 'flex'
