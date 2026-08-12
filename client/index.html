@@ -50,9 +50,10 @@
       <div class="sort-row" id="sort-row" style="display:none">
         <span style="font-size:12px; opacity:0.6; align-self:center">排序</span>
         <button class="trek-btn trek-btn--secondary sort-btn" data-sort="rating">⭐ 评分</button>
-        <button class="trek-btn trek-btn--secondary sort-btn" data-sort="distance">📍 距离</button>
         <button class="trek-btn trek-btn--secondary sort-btn" data-sort="cost">💰 人均</button>
         <button class="trek-btn trek-btn--secondary sort-btn" data-sort="default">默认</button>
+        <!-- 距离排序暂时屏蔽：依赖行程内有坐标的锚点，无锚点时排序无意义（待完善后启用）
+        <button class="trek-btn trek-btn--secondary sort-btn" data-sort="distance">📍 距离</button> -->
       </div>
 
       <div id="results" style="margin-top: 16px"></div>
@@ -189,8 +190,8 @@
                 ${photo ? `<img src="${photo}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.innerHTML='${emojiFor(typeCls)}'" />` : emojiFor(typeCls)}
               </div>
               <div style="flex:1; min-width:0">
-                <div style="font-weight:600">${p.name}</div>
-                <div class="poi-tags">
+                <div style="font-weight:600; display:flex; align-items:center; gap:6px; flex-wrap:wrap">
+                  <span>${p.name}</span>
                   ${typeCls ? `<span class="poi-tag">${typeCls}</span>` : ''}
                   ${p.keytag ? `<span class="poi-tag">${p.keytag}</span>` : ''}
                 </div>
@@ -282,6 +283,9 @@
           currentPois = data.pois || []
           currentSort = 'default'
           document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'))
+          // 默认排序按钮高亮：当前就是“默认”
+          const defBtn = document.querySelector('.sort-btn[data-sort="default"]')
+          if (defBtn) defBtn.classList.add('active')
           if (!data.pois || data.pois.length === 0) {
             document.getElementById('sort-row').style.display = 'none'
             box.innerHTML = '<p style="opacity:0.6">无结果，试试换关键词或加城市</p>'
