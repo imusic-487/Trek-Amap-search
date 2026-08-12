@@ -32,6 +32,20 @@
       .poi-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; font-size: 12px; }
       .poi-meta span { opacity: 0.75; }
       .poi-rating { color: #f59e0b; opacity: 1 !important; font-weight: 600; }
+      /* v1.1.6: 复制/添加按钮列——移动端并排带文字，网页端右侧垂直图标 */
+      .poi-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+      .poi-actions .trek-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; }
+      @media (min-width: 641px) {
+        .poi-actions {
+          flex-direction: column;
+          justify-content: center;
+          margin-top: 0;
+          flex-shrink: 0;
+          width: 40px;
+        }
+        .poi-actions .trek-btn { width: 40px; height: 40px; flex: none; padding: 0; font-size: 16px; }
+        .poi-actions .btn-label { display: none; }
+      }
       .sort-row { display: flex; gap: 6px; margin-top: 10px; }
       .sort-btn { font-size: 12px; padding: 3px 10px; opacity: 0.7; }
       .sort-btn.active { opacity: 1; border-color: var(--trek-primary, #3b82f6); color: var(--trek-primary, #3b82f6); }
@@ -218,10 +232,10 @@
                 </div>
                 <div style="font-size:12px; opacity:0.7; margin-top:2px">📍 ${addr}${ll ? '（' + ll + '）' : ''}</div>
                 <div style="font-size:12px; opacity:0.5; margin-top:2px">${p.business_area ? p.business_area + ' · ' : ''}${p.tel ? '☎ ' + p.tel : ''}</div>
-                <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap">
-                  <button class="trek-btn trek-btn--secondary" data-copy="${i}" style="flex:1">📋 复制地址</button>
-                  <button class="trek-btn trek-btn--primary" data-add="${i}" style="flex:1">➕ 添加进行程</button>
-                </div>
+              </div>
+              <div class="poi-actions">
+                <button class="trek-btn trek-btn--secondary" data-copy="${i}" title="复制地址"><span class="btn-icon">📋</span><span class="btn-label">复制地址</span></button>
+                <button class="trek-btn trek-btn--primary" data-add="${i}" title="添加进行程"><span class="btn-icon">➕</span><span class="btn-label">添加进行程</span></button>
               </div>
             </div>
           `
