@@ -29,7 +29,7 @@ Planning a trip to China? TREK's built-in search uses OpenStreetMap — great fo
 - One tap copies the full address — street, district, city, country — plus coordinates and an Amap map link
 - One tap adds the place to your open trip with coordinates, address and map link filled in automatically
 
-The only requirement is a free Amap Web Service API key from [console.amap.com](https://console.amap.com/). It's free (500,000 calls/day) — you may need a Chinese phone number to register, but once you have a key, searching Chinese places becomes dramatically easier than with OSM alone.
+The only requirement is an Amap Web Service API key from [console.amap.com](https://console.amap.com/). The personal-developer quota is 500,000 calls/day — you may need a Chinese phone number to register, but once you have a key, searching Chinese places becomes dramatically easier than with OSM alone.
 
 ## Screenshots
 
@@ -59,13 +59,12 @@ TREK shows this list to the admin at activation — exactly three permissions, a
 2. TREK → Admin → Plugins → **Upload** → choose the zip
 3. Activate and approve the permissions
 
-### 2. Get an Amap key (free)
+### 2. Get an Amap key
 
 - Amap open platform: <https://console.amap.com/>
 - Register (Alipay / phone) → Console → Application Management → Create app → Add key
 - Choose the **Web 服务 (Web Service)** type — *not* Web 端 JS API!
-- **Free**: personal-developer quota is 500,000 calls/day
-- No payment, no real-name verification
+- Personal-developer quota: 500,000 calls/day — searching places won't come close to using it up
 
 ### 3. Use it
 
@@ -82,7 +81,7 @@ TREK shows this list to the admin at activation — exactly three permissions, a
 ## Compatibility
 
 - Requires **TREK >=3.4.0** (`>=3.4.0 <4.0.0`)
-- No native modules, no paid API beyond Amap's free tier
+- No native modules, no paid API beyond Amap's API quota (personal-developer: 500,000 calls/day)
 
 ## Support
 
