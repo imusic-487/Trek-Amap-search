@@ -67,7 +67,7 @@ module.exports = definePlugin({
           type: p.type,
           address: p.address || '',
           location: p.location || '',
-          tel: p.tel || '',
+          tel: Array.isArray(p.tel) ? (p.tel[0] || '') : (p.tel || ''),
           pname: p.pname || '',
           cityname: p.cityname || '',
           adname: p.adname || '',
