@@ -31,6 +31,16 @@ Planning a trip to China? TREK's built-in search uses OpenStreetMap — great fo
 
 The only requirement is an Amap Web Service API key from [console.amap.com](https://console.amap.com/). The personal-developer quota is 500,000 calls/day — you may need a Chinese phone number to register, but once you have a key, searching Chinese places becomes dramatically easier than with OSM alone.
 
+## Relationship to TREK's official China map plans
+
+TREK has open discussions about a China map mode ([#1636](https://github.com/liketrek/TREK/discussions/1636), [#1673](https://github.com/liketrek/TREK/discussions/1673)) aiming to make Amap a built-in place search provider, possibly with Amap tiles and routing. **That proposal is still in discussion — no code yet** — and its core challenge is the coordinate system (GCJ-02 vs WGS-84 conversion is a legal grey area).
+
+This plugin is positioned differently:
+
+- **Pure search enhancement**: it only searches Amap POIs and shows results — no map rendering, no routing, no coordinate conversion, so the coordinate-system issue simply does not apply
+- **Ready to use now**: until the official work lands, this plugin is the immediately usable Amap search option for TREK; once it does, its search capability remains complementary
+- **Independent**: the plugin does not depend on the official roadmap or its timeline
+
 ## Screenshots
 
 ![Light theme](docs/screenshot.png)

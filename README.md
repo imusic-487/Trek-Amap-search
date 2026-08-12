@@ -31,6 +31,16 @@ TREK 自带的搜索用的是 OpenStreetMap，找地标没问题，但找那些�
 
 唯一要求是一个高德 Web 服务 API Key（[console.amap.com](https://console.amap.com/)）。个人开发者配额每天 50 万次调用——注册可能需要中国手机号，但拿到 Key 之后，搜中国地点比只用 OSM 容易太多了。
 
+## 与 TREK 官方中国地图方案的关系
+
+TREK 官方有一个关于中国地图模式的讨论（[#1636](https://github.com/liketrek/TREK/discussions/1636)、[#1673](https://github.com/liketrek/TREK/discussions/1673)），方向是把高德作为内置的 place search provider，并考虑高德瓦片/路线。**该方案仍在讨论阶段，尚未有代码**，且核心难点是坐标系（GCJ-02 vs WGS-84 转换涉及法律灰色地带）。
+
+本插件的定位与官方方案不同：
+
+- **纯搜索增强**：只做高德 POI 搜索与结果展示，不涉及地图渲染、路线或坐标转换，因此不存在坐标系问题
+- **即插即用**：官方落地前，本插件是 TREK 里可立即使用的高德搜索方案；官方落地后，其搜索能力仍可与官方功能互补
+- **持续可用**：插件独立于官方路线，不受官方讨论进度影响
+
 ## Screenshots · 截图
 
 ![亮色主题](docs/screenshot.png)
