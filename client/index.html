@@ -278,15 +278,16 @@
             return
           }
           refreshKeyHint(true)
+          // 先更新缓存再判空：防止“无结果”时排序按钮渲染上一次的结果
+          currentPois = data.pois || []
+          currentSort = 'default'
+          document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'))
           if (!data.pois || data.pois.length === 0) {
+            document.getElementById('sort-row').style.display = 'none'
             box.innerHTML = '<p style="opacity:0.6">无结果，试试换关键词或加城市</p>'
             return
           }
-          currentPois = data.pois
-          currentSort = 'default'
-          // v1.1: 有结果才显示排序栏
           document.getElementById('sort-row').style.display = 'flex'
-          document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'))
           renderResults(sortedPois())
         } catch (e) {
           box.innerHTML = `<p style="color:var(--trek-danger,#ef4444)">请求异常: ${e.message}</p>`
