@@ -35,6 +35,9 @@
       /* v1.1.6: 复制/添加按钮列——移动端并排带文字，网页端右侧垂直图标 */
       .poi-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
       .poi-actions .trek-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; }
+      /* v1.1.9: 图标与文字同水平线——通用区（移动端也生效），inline-flex 居中 + 固定尺寸 */
+      .poi-actions .btn-icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .poi-actions .btn-icon svg { width: 16px; height: 16px; display: block; }
       @media (min-width: 641px) {
         .poi-actions {
           flex-direction: column;
@@ -44,7 +47,6 @@
           width: 40px;
         }
         .poi-actions .trek-btn { width: 40px; height: 40px; flex: none; padding: 0; font-size: 16px; }
-        .poi-actions .btn-icon { display: flex; align-items: center; justify-content: center; }
         .poi-actions .btn-icon svg { width: 18px; height: 18px; }
         .poi-actions .btn-label { display: none; }
       }
