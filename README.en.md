@@ -107,6 +107,9 @@ TREK shows this list to the admin at activation — exactly three permissions, a
 
 ## Changelog
 
+### v1.2.0 (2026-08-13)
+- Add button now shows icon feedback: spinner loader (lucide `loader` + rotation animation) while adding, check mark (lucide `check`) when added — replacing the plain text "Adding… / ✅ Added"
+
 ### v1.1.9 (2026-08-12)
 - Fix mobile icon/text baseline alignment in action buttons (SVG sizing/centering was desktop-only)
 

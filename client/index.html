@@ -38,6 +38,9 @@
       /* v1.1.9: 图标与文字同水平线——通用区（移动端也生效），inline-flex 居中 + 固定尺寸 */
       .poi-actions .btn-icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
       .poi-actions .btn-icon svg { width: 16px; height: 16px; display: block; }
+      /* v1.2: 添加中 loader 旋转动画 */
+      .trek-spin { animation: trek-spin 1s linear infinite; }
+      @keyframes trek-spin { to { transform: rotate(360deg); } }
       @media (min-width: 641px) {
         .poi-actions {
           flex-direction: column;
@@ -203,6 +206,9 @@
       // v1.1.8: Lucide 图标（与 TREK 设计语言对齐，ISC 许可内联 SVG）
       const ICON_COPY = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>'
       const ICON_ADD = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>'
+      // v1.2: 按钮状态图标——添加中转圈 loader（lucide loader）/ 已添加打勾 check（lucide check）
+      const ICON_LOADER = '<svg class="trek-spin" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>'
+      const ICON_CHECK = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
 
       // v1.1: 渲染结果（含排序后）
       function renderResults(pois) {
@@ -265,7 +271,7 @@
           btn.addEventListener('click', async () => {
             const poi = pois[Number(btn.dataset.add)]
             if (!tripId) { trek.notify('error', '未检测到当前行程'); return }
-            btn.disabled = true; btn.textContent = '添加中…'
+            btn.disabled = true; btn.innerHTML = `<span class="btn-icon">${ICON_LOADER}</span><span class="btn-label">添加中</span>`
             try {
               const res = await trek.invoke('/add', {
                 method: 'POST',
@@ -273,15 +279,15 @@
               })
               if (res.ok) {
                 trek.notify('success', `已添加「${poi.name}」到行程`)
-                btn.textContent = '✅ 已添加'
+                btn.innerHTML = `<span class="btn-icon">${ICON_CHECK}</span><span class="btn-label">已添加</span>`
                 btn.style.opacity = '0.6'
               } else {
                 trek.notify('error', res.error || '添加失败')
-                btn.disabled = false; btn.textContent = '➕ 添加进行程'
+                btn.disabled = false; btn.innerHTML = `<span class="btn-icon">${ICON_ADD}</span><span class="btn-label">添加进行程</span>`
               }
             } catch (e) {
               trek.notify('error', '请求失败: ' + e.message)
-              btn.disabled = false; btn.textContent = '➕ 添加进行程'
+              btn.disabled = false; btn.innerHTML = `<span class="btn-icon">${ICON_ADD}</span><span class="btn-label">添加进行程</span>`
             }
           })
         })
