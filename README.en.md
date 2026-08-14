@@ -22,7 +22,7 @@ Search Amap POIs right inside TREK — find restaurants, sights & hidden gems, c
   - **type → description**
   - **Amap map link → Website field** (tap "Open link" on the place card to jump to Amap)
   - **phone → Notes field** (on its own line)
-- 🔀 **Result sorting** (v1.1.0): rating / avg cost / distance (relative to trip anchor) / default — pure client-side
+- 🔀 **Result sorting** (v1.1.0): rating / avg cost / default — pure client-side (distance sort disabled: SDK has no "selected place" event, since v1.3.2; distance removed from cards in v1.3.17)
 - 🖥️ **Responsive action buttons** (v1.1.6): on mobile, Copy/Add sit side-by-side with labels; on desktop (≥641px) they stack vertically on the card's right edge as icon-only buttons (Lucide Copy / Plus, with hover tooltips)
 - 🔑 **Per-user API key** (Settings → Plugins, encrypted storage, never in code)
 - 💡 **Smart key hint**: shows a sign-up hint when no key is set, auto-hides once a key is saved or a search succeeds
@@ -107,6 +107,18 @@ TREK shows this list to the admin at activation — exactly three permissions, a
 - Issues & questions: <https://github.com/imusic-487/Trek-Amap-search/issues>
 - Source & changelog: <https://github.com/imusic-487/Trek-Amap-search>
 
+
+## Roadmap
+
+- [ ] Search history (recent 10, tag shortcuts under the input, clear button)
+- [ ] "View on Amap" button (card corner → amap.com/place/{id}; QR code on mobile)
+- [ ] Copy options (address only / full details / name+address)
+- [ ] Distance sort (auto-enable when a trip anchor exists; greyed out + hint otherwise) — blocked on TREK SDK support
+- [ ] Batch add (select multiple POIs, add at once)
+- [ ] Map preview of results (mini map above the list)
+- [ ] Favorites (local persistence + export/import)
+- [x] ~~Empty-state copy + retry button + key-hint link~~ (v1.3.15 empty state + retry; v1.3.25 key-hint link)
+
 ## Changelog
 
 ### v1.3.26 (2026-08-14) — Unified 40px search row
@@ -127,7 +139,7 @@ TREK shows this list to the admin at activation — exactly three permissions, a
 - In the 100px city box the tag collided with the search button → hidden on mobile (the detected city is visible in the input anyway)
 
 ### v1.3.22 (2026-08-14) — Fix literal `${ICON_SEARCH}` in the button
-- Static HTML doesn't evaluate JS template syntax → inlined the lucide search SVG (lesson: no `\${}` in static HTML, only inside `<script>`)
+- Static HTML doesn't evaluate JS template syntax → inlined the lucide search SVG (lesson: no `${}` in static HTML, only inside `<script>`)
 
 ### v1.3.21 (2026-08-14) — Global icon+label search button
 - Mobile no longer hides the button label — same 🔍+搜索 on both ends
