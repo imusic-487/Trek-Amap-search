@@ -2,7 +2,9 @@
 
 [简体中文](README.md) | English
 
-Search Amap (Gaode) POIs right inside your TREK trip planner — copy a full address or add a place to the open trip with coordinates, map link and phone, in one tap.
+Search Amap POIs right inside TREK — find restaurants, sights & hidden gems, copy details or add them to your current trip with coordinates, map link & phone in one click.
+
+在 TREK 里直接搜遍高德地图——餐厅、景点、宝藏小店都能找，一键复制详情或添加进当前行程，坐标/地图链接/电话自动带上。
 
 ![找地方 / Amap Search — cover](docs/cover.jpg)
 

@@ -6,14 +6,27 @@
     <!-- trek:ui -->
     <title>找地方</title>
     <style>
+      /* v1.3.16: 修复 trek-select 下拉面板宽度——enhanceSelect 把原生 select 包进 .trek-select-wrap 并隐藏原 select，flex 布局实际作用在 wrap 上；不设宽度则面板(absolute left/right:0 跟随 wrap)只有内容宽(~100px)，“评分 高→低”等长选项被截断 */
+      .filter-sort-row .trek-select-wrap { flex: 1; min-width: 150px; }
       /* v1.1: 移动端适配 + 卡片增强样式 */
       @media (max-width: 640px) {
-        .search-row { flex-direction: column !important; }
-        .search-row .trek-input { min-width: 0 !important; width: 100%; }
-        .search-row .trek-btn { width: 100%; }
+        /* v1.3.20: 搜索区一行化——关键词 flex:1 + 城市窄框 + 搜索按钮（原三行竖排 ≈120px → 一行 ≈40px） */
+        .search-row { flex-direction: row !important; flex-wrap: nowrap; }
+        .search-row #q { flex: 1 1 auto; min-width: 0 !important; width: auto !important; }
+        #city-wrap { flex: 0 0 auto !important; min-width: 0 !important; width: 100px; }
+        #city-wrap .trek-input { padding: 8px 8px; font-size: 13px; }
+        /* v1.3.21: 全局统一 icon+文字——按钮不再 icon-only（两端同款） */
+        .search-row .trek-btn { flex: 0 0 auto; width: auto !important; padding: 0 12px; min-width: 68px; }
+        /* v1.3.23: 移动端隐藏 ✨ 自动识别标签——一行化后城市框仅 100px，右侧标签会与搜索按钮重叠；城市名已在 input 内可见，标签让位给可用性 */
+        #city-auto-tag { display: none !important; }
+        /* v1.3.14: 两端都不限高（v1.3.12 方案）——内容全展开，滚动交宿主页面；移动端保持 iOS 默认 overlay 滚动条 */
         .poi-card { flex-direction: column !important; }
-        .poi-thumb { width: 100% !important; height: 140px !important; }
-        .sort-row { flex-wrap: wrap; }
+        /* v1.3.1: 移动端缩略图降高（审查 3.3 问题6：140px 过高，一屏只能看 1-2 张卡） */
+        .poi-thumb { width: 100% !important; height: 96px !important; }
+        /* v1.3.1: 移动端按钮紧凑化（审查 3.3 问题7：并排按钮占卡片 20% 高度） */
+        .poi-actions { gap: 6px; margin-top: 6px; }
+        .poi-actions .trek-btn { padding: 6px 8px; font-size: 12px; min-height: 32px; }
+        .filter-sort-row { flex-wrap: wrap; }
       }
       .poi-card { display: flex; gap: 12px; }
       .poi-thumb {
@@ -29,22 +42,26 @@
         background: var(--trek-border, rgba(128,128,128,0.15));
         color: var(--trek-text, inherit); opacity: 0.85;
       }
-      .poi-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; font-size: 12px; }
-      .poi-meta span { opacity: 0.75; }
-      .poi-rating { color: #f59e0b; opacity: 1 !important; font-weight: 600; }
+      /* v1.3.25: 删除 .poi-meta 死代码（v1.3.17 评分/人均上移名称行后已无引用） */
+      .poi-rating { color: #d97706; opacity: 1 !important; font-weight: 600; }  /* v1.3.25: #f59e0b→#d97706 amber-600，浅底对比度 2.1→3.3:1（用户拍板） */
+      /* v1.3.24: 信息行 lucide 图标——统一 14px（12px 文字配 14px 图标），flex 垂直居中 */
+      .poi-info-icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .poi-info-icon svg { width: 14px; height: 14px; display: block; }
       /* v1.1.6: 复制/添加按钮列——移动端并排带文字，网页端右侧垂直图标 */
       .poi-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
       .poi-actions .trek-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; }
       /* v1.1.9: 图标与文字同水平线——通用区（移动端也生效），inline-flex 居中 + 固定尺寸 */
       .poi-actions .btn-icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
-      .poi-actions .btn-icon svg { width: 16px; height: 16px; display: block; }
+      /* v1.3.25: 全局兜底 16px（覆盖 #pager 的 loader，翻页按钮不再跳高）——桌面 18px 特化仍在下方覆盖 .poi-actions */
+      .btn-icon svg { width: 16px; height: 16px; display: block; }
       /* v1.2: 添加中 loader 旋转动画 */
       .trek-spin { animation: trek-spin 1s linear infinite; }
       @keyframes trek-spin { to { transform: rotate(360deg); } }
       @media (min-width: 641px) {
         .poi-actions {
           flex-direction: column;
-          justify-content: center;
+          /* v1.3.19: 顶部对齐——原 center 让按钮列悬在卡片中部，与名称行的评分/人均错位（电脑端“不水平”问题）；改 flex-start 后复制按钮与名称行同水平 */
+          justify-content: flex-start;
           margin-top: 0;
           flex-shrink: 0;
           width: 40px;
@@ -53,9 +70,25 @@
         .poi-actions .btn-icon svg { width: 18px; height: 18px; }
         .poi-actions .btn-label { display: none; }
       }
-      .sort-row { display: flex; gap: 6px; margin-top: 10px; }
-      .sort-btn { font-size: 12px; padding: 3px 10px; opacity: 0.7; }
-      .sort-btn.active { opacity: 1; border-color: var(--trek-primary, #3b82f6); color: var(--trek-primary, #3b82f6); }
+      /* v1.3.2: 筛选 + 排序下拉一行（官方 .trek-select 增强组件） */
+      .filter-sort-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+      /* v1.3.2: 搜索按钮 loader 缩小（icon 16px 与卡片按钮一致） */
+      .search-row .btn-icon svg { width: 16px; height: 16px; }
+      /* v1.3.5: 搜索按钮固定尺寸——文字/加载态长宽完全一致（实测文字 37.5px vs icon 40px，改固定 height 锁顶） */
+      #btn-search { min-width: 68px; height: 40px; }      /* v1.3.5: 结果区限高内部滚动——防宿主页面出现滚动条导致整体变窄 */
+      /* v1.3.26: 搜索行三控件统一 40px 高——宿主 trek-input 无固定高度（8px padding+13px 字 ≈36px），与 40px 按钮差 4px 致不齐（网页/移动端同样问题）；box-sizing 宿主已 border-box，固定 height 后 padding 不再撑高 */
+      .search-row .trek-input, .search-row .trek-btn { height: 40px; }
+      /* v1.3.12: 去掉 #results 限高——回到内容全展开（用户拍板：无内部滚动，接受宿主滚动条吃宽度） */
+      #results { margin-top: 16px; }
+      /* v1.3.14: TREK 官方滚动条样式（对齐 client/src/index.css）——插件内任何滚动条与宿主统一 6px 细条圆角，深浅色自适应 */
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-button { display: none; height: 0; width: 0; }
+      ::-webkit-scrollbar-track { background: var(--scrollbar-track, #f1f5f9); border-radius: 3px; }
+      ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb, #d1d5db); border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover, #9ca3af); }
+      .scroll-container { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb, #d1d5db) var(--scrollbar-track, #f1f5f9); }
+      /* v1.3: 卡片信息层次——名称放大（v1.3.1: 移除"更多信息"折叠；v1.3.2: 电话与地址分行） */
+      .poi-name { font-size: 15px; font-weight: 600; }
     </style>
   </head>
   <body>
@@ -64,55 +97,124 @@
 
       <div class="search-row" style="display: flex; gap: 8px; flex-wrap: wrap">
         <input id="q" class="trek-input" placeholder="搜索关键词，如：故宫 / 长城 / 西湖" style="flex: 2; min-width: 200px" />
-        <input id="city" class="trek-input" placeholder="城市" style="flex: 1; min-width: 100px" />
-        <button id="btn-search" class="trek-btn trek-btn--primary">搜索</button>
+        <!-- v1.3.9: 城市输入框外包一层——✨ 自动识别标签常驻可见（直到手动修改） -->
+        <div id="city-wrap" style="flex: 1; min-width: 100px; position: relative">
+          <input id="city" class="trek-input" placeholder="城市" style="width: 100%" />
+          <span id="city-auto-tag" style="display:none; position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:11px; color:var(--trek-info, #2563eb); pointer-events:none; white-space:nowrap">✨ 自动识别</span>
+        </div>
+        <!-- v1.3.22: 修复静态 HTML 里 ${ICON_SEARCH} 不展开显示字面量——内联 lucide search SVG（与 JS 常量一致） -->
+        <!-- v1.3.22: 修复静态 HTML 里 ${ICON_SEARCH} 不展开显示字面量——内联 lucide search SVG（与 JS 常量一致） -->
+        <button id="btn-search" class="trek-btn trek-btn--primary"><span class="btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span><span class="btn-label">搜索</span></button>
       </div>
 
-      <div class="sort-row" id="sort-row" style="display:none">
-        <span style="font-size:12px; opacity:0.6; align-self:center">排序</span>
-        <button class="trek-btn trek-btn--secondary sort-btn" data-sort="rating">⭐ 评分</button>
-        <button class="trek-btn trek-btn--secondary sort-btn" data-sort="cost">💰 人均</button>
-        <button class="trek-btn trek-btn--secondary sort-btn" data-sort="default">默认</button>
-        <!-- 距离排序暂时屏蔽：依赖行程内有坐标的锚点，无锚点时排序无意义（待完善后启用）
-        <button class="trek-btn trek-btn--secondary sort-btn" data-sort="distance">📍 距离</button> -->
+      <!-- v1.3.15: 说明精简为一行，放搜索框与筛选框之间 -->
+      <div style="font-size:11px; opacity:0.65; margin-top:8px">💡 城市自动识别可手动改 · 搜索后可按类型筛选、按评分排序 · 添加后高德链接自动存入「网站」</div>
+
+      <!-- v1.3.2: 筛选 + 排序合并为两个下拉（官方 .trek-select 增强组件，自动升级 listbox） -->
+      <!-- v1.3.9: 初始可见（不隐身）+ 类型/排序小标签 + 排序方向标注 -->
+      <div class="filter-sort-row" id="filter-sort-row" style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; align-items:center">
+        <span style="font-size:11px; opacity:0.7; flex:none">类型</span>
+        <select id="filter-select" class="trek-select" style="flex:1; min-width:120px">
+          <option value="all">全部</option>
+          <option value="food">餐饮</option>
+          <option value="sight">景点</option>
+          <option value="shopping">购物</option>
+          <option value="hotel">住宿</option>
+          <option value="other">其他</option>
+        </select>
+        <span style="font-size:11px; opacity:0.7; flex:none">排序</span>
+        <select id="sort-select" class="trek-select" style="flex:1; min-width:150px">
+          <option value="default">默认</option>
+          <option value="rating">评分 高→低</option>
+          <option value="cost">人均 低→高</option>
+        </select>
       </div>
 
-      <div id="results" style="margin-top: 16px"></div>
+      <!-- v1.3.10: 结构根治——#results 是滚动容器，内嵌 #results-list（innerHTML 重建区）+ #pager（静态，不被销毁） -->
+      <div id="results" style="margin-top: 16px">
+        <div id="results-list"></div>
+        <div id="pager" style="display:none; margin-top: 14px; text-align:center">
+          <div id="pager-info" style="font-size:12px; opacity:0.8; margin-bottom:8px"></div>
+          <button id="btn-more" class="trek-btn trek-btn--secondary" style="display:none">加载更多</button>
+        </div>
+      </div>
 
-      <div style="margin-top: 20px; padding: 10px 12px; font-size: 12px; opacity: 0.65; border-top: 1px solid var(--trek-border, rgba(128,128,128,0.25))">
-        💡 添加后：高德地图链接自动存入地点「网站」，点击对应地点后底部的“打开链接”即可跳转至高德地图；如需补充其他链接（官网/小红书/抖音等），编辑该地点的「备注」即可，一行一个。<br />
-        <span id="key-hint" style="display:none">🔑 还没有 Key？前往高德开放平台申请（选择「Web 服务」类型），个人开发者配额 50 万次/天。</span>
+      <div style="margin-top: 14px; padding: 8px 12px; font-size: 12px; opacity: 0.6; border-top: 1px solid var(--trek-border, rgba(128,128,128,0.25))">
+        💡 补充官网/小红书/抖音等链接：编辑地点「备注」，一行一个。
+        <span id="key-hint" style="display:none">🔑 还没有 Key？<a href="https://lbs.amap.com/api/webservice/guide/create-project/get-key" target="_blank" rel="noopener" style="color:var(--trek-info,#2563eb)">前往高德开放平台申请</a>（选择「Web 服务」类型），个人开发者配额 50 万次/天。</span>  <!-- v1.3.25: key-hint 加真实链接 -->
       </div>
     </div>
 
     <script>
       // 高德搜索插件 UI - trip-page 类型：显示在当前行程顶部导航，context 自带 tripId
       let tripId = null
+      let lastTripId = null    // v1.3.6: 主题切换也触发 onContext，但只有 tripId 变化才刷新列表（防闪烁重载）
       let currentPois = []       // v1.1: 缓存搜索结果，供客户端排序
       let currentSort = 'default'
+      let currentFilter = 'all'    // v1.3: 筛选（all/food/sight/shopping/hotel/other）
       let anchor = null          // v1.1: 距离排序锚点（行程内第一个有坐标的地点）
+      let currentPage = 1        // v1.2: 分页
+      let totalCount = 0         // v1.2: 高德返回总数
+      let lastQuery = null       // v1.3.25: 最近一次成功搜索的快照 {q, city}——loadMore 只用快照，防改词不搜索时翻页串包
+      let requestSeq = 0         // v1.2: 请求序号——取消/新请求使旧响应作废
+      let addedNames = new Set() // v1.2: 行程已有地点名（刷新后标记"已在行程"）
+      let pagerEl = null         // v1.3.10: pager 持久引用——innerHTML 会销毁节点，用引用避免 getElementById 返回 null
 
       trek.onContext((ctx) => {
-        tripId = ctx && ctx.tripId ? String(ctx.tripId) : null
-        if (tripId) { loadAnchor(); loadCity() }
+        const tid = ctx && ctx.tripId ? String(ctx.tripId) : null
+        // v1.3.6: 主题/外观切换也会收到新 context——tripId 没变就不重载列表（否则整列表闪烁重建）
+        if (tid === lastTripId) return
+        lastTripId = tid
+        tripId = tid
+        if (tripId) { loadAnchor(); loadCity(); loadTripPlaces() }
       })
+
+      // v1.2: 拉取行程已有地点名，刷新后标记"已在行程"，避免重复添加
+      async function loadTripPlaces() {
+        if (!tripId) return
+        try {
+          const res = await trek.invoke('/trip-places?tripId=' + encodeURIComponent(tripId))
+          addedNames = new Set(((res && res.ok && res.places) || []).map(p => p.name))
+          if (currentPois.length) renderResults(visiblePois())
+        } catch (e) { /* 忽略 */ }
+      }
 
       // v1.1.5: 自动识别行程城市（标题→地点坐标→地址），填入城市输入框（用户可改）
       async function loadCity() {
         const cityInput = document.getElementById('city')
+        const tag = document.getElementById('city-auto-tag')
         if (!cityInput || !tripId) return
         try {
           const res = await trek.invoke('/trip-city?tripId=' + encodeURIComponent(tripId))
           if (res && res.ok && res.city) {
             cityInput.value = res.city
             cityInput.placeholder = res.city + '（自动识别，可修改）'
+            // v1.3.9: ✨ 自动识别标签持续可见（直到用户手动修改）
+            if (tag) { tag.style.display = ''; tag.dataset.auto = '1' }
           } else {
             cityInput.placeholder = '未识别到城市，可手动填写'
+            if (tag) tag.style.display = 'none'
           }
         } catch (e) { /* 忽略，保持现状 */ }
+        // v1.3.1: 识别到城市时给一次轻提示（审查 3.5）——v1.3.9: ✨ 标签为主，toast 保留首次提醒
+        if (cityInput.dataset.notified !== '1' && cityInput.value) {
+          cityInput.dataset.notified = '1'
+          try { trek.notify('info', '已自动识别城市：' + cityInput.value + '，如不正确请更改') } catch (e) {}
+        }
       }
 
-      // v1.1: 拉取行程锚点（第一个有坐标的地点），供距离排序
+      // v1.3.9: 用户手动修改城市 → 隐藏 ✨ 自动识别标签（不再是自动识别的值）
+      function bindCityAutoTag() {
+        const cityInput = document.getElementById('city')
+        if (!cityInput) return
+        cityInput.addEventListener('input', () => {
+          const tag = document.getElementById('city-auto-tag')
+          if (tag) { tag.style.display = 'none'; tag.dataset.auto = '0' }
+        })
+      }
+      bindCityAutoTag()
+
+      // v1.1: 拉取行程锚点（第一个有坐标的地点）——距离排序已屏蔽，保留供 README 待办方案确认后启用
       async function loadAnchor() {
         if (!tripId) { anchor = null; return }
         try {
@@ -133,7 +235,7 @@
       refreshKeyHint()
 
       function fullAddress(p) {
-        return ['中国', p.pname, p.cityname, p.adname, p.address].filter(Boolean).join('')
+        return [p.pname, p.cityname, p.adname, p.address].filter(Boolean).join('')
       }
 
       // v1.1: 类型解析——type 形如 "餐饮服务;咖啡厅;咖啡厅"，取最后一个作为小类
@@ -152,12 +254,13 @@
         const c = Number(p.cost)
         return Number.isFinite(c) && c > 0 ? '¥' + c : ''
       }
-      // v1.1: 营业时间精简——高德 opentime2 可能是数组或字符串，先归一到字符串
+      // v1.1: 营业时间——高德 opentime2 可能是数组或字符串，先归一到字符串；v1.3.18: 去掉 24 字符截断，完整显示第一段（多段只提示数量防卡片爆炸）
       function openTimeText(p) {
         if (!p.opentime) return ''
         const raw = Array.isArray(p.opentime) ? p.opentime.join('；') : String(p.opentime)
-        const first = raw.split('；')[0].split(';')[0].trim()
-        return first.length > 24 ? first.slice(0, 24) + '…' : first
+        const segs = raw.split(/[；;]/).map(s => s.trim()).filter(Boolean)
+        if (!segs.length) return ''
+        return segs.length === 1 ? segs[0] : segs[0] + ' 等' + segs.length + '段'
       }
 
       // v1.1: 两点距离（km，Haversine）
@@ -175,9 +278,27 @@
         return distanceKm(anchor.lat, anchor.lng, lat, lng)
       }
 
-      // v1.1: 客户端排序
-      function sortedPois() {
-        const arr = currentPois.slice()
+      // v1.3: 筛选匹配（基于高德 type 大类）
+      function filterMatch(type, filter) {
+        const t = type || ''
+        const m = {
+          food: /餐饮|美食|咖啡|餐厅|小吃|甜品|酒吧/,
+          sight: /风景名胜|公园|博物馆|名胜|景点|展馆/,
+          shopping: /购物|商场|超市|市场|专卖/,
+          hotel: /住宿|酒店|宾馆|旅馆|民宿/,
+        }
+        if (filter === 'all') return true
+        if (filter === 'other') {
+          return !m.food.test(t) && !m.sight.test(t) && !m.shopping.test(t) && !m.hotel.test(t)
+        }
+        return (m[filter] || /^$/).test(t)
+      }
+
+      // v1.3: 可见结果 = 筛选 + 排序（替代原 sortedPois）
+      function visiblePois() {
+        const arr = (currentFilter === 'all'
+          ? currentPois.slice()
+          : currentPois.filter(p => filterMatch(p.type, currentFilter))).slice()
         if (currentSort === 'rating') {
           arr.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0))
         } else if (currentSort === 'cost') {
@@ -206,72 +327,77 @@
       // v1.1.8: Lucide 图标（与 TREK 设计语言对齐，ISC 许可内联 SVG）
       const ICON_COPY = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>'
       const ICON_ADD = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>'
+      // v1.3.20: 搜索按钮放大镜（移动端 icon-only）
+      const ICON_SEARCH = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>'
+      // v1.3.24: 信息行 lucide 图标（官方定义，统一尺寸由 .poi-info-icon svg 控制）
+      const ICON_MAP_PIN = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>'
+      const ICON_PHONE = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2a9 9 0 0 1 9 9"/><path d="M13 6a5 5 0 0 1 5 5"/><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/></svg>'
+      const ICON_CLOCK = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6l2 1"/><path d="M13.5 21.885A10 10 0 1 1 22 12"/><path d="M14 18h8"/><path d="m18 22 4-4-4-4"/></svg>'
       // v1.2: 按钮状态图标——添加中转圈 loader（lucide loader）/ 已添加打勾 check（lucide check）
       const ICON_LOADER = '<svg class="trek-spin" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>'
       const ICON_CHECK = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
 
-      // v1.1: 渲染结果（含排序后）
-      function renderResults(pois) {
-        const box = document.getElementById('results')
-        if (!pois || pois.length === 0) {
-          box.innerHTML = '<p style="opacity:0.6">无结果，试试换关键词或加城市</p>'
-          return
-        }
-        box.innerHTML = pois.map((p, i) => {
-          const addr = fullAddress(p)
-          const ll = p.location || ''
-          const photo = p.photos && p.photos[0]
-          const typeCls = typeClass(p)
-          const rating = ratingText(p)
-          const cost = costText(p)
-          const open = openTimeText(p)
-          const dist = poiDistKm(p)
-          const distTxt = dist != null ? ` · ${dist < 1 ? (dist*1000).toFixed(0)+'m' : dist.toFixed(1)+'km'}` : ''
-          return `
-            <div class="trek-card poi-card" style="padding:10px 12px; margin-bottom:8px">
-              <div class="poi-thumb">
-                ${photo ? `<img src="${photo}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.innerHTML='${emojiFor(typeCls)}'" />` : emojiFor(typeCls)}
-              </div>
-              <div style="flex:1; min-width:0">
-                <div style="font-weight:600; display:flex; align-items:center; gap:6px; flex-wrap:wrap">
-                  <span>${p.name}</span>
-                  ${typeCls ? `<span class="poi-tag">${typeCls}</span>` : ''}
-                  ${p.keytag ? `<span class="poi-tag">${p.keytag}</span>` : ''}
-                </div>
-                <div class="poi-meta">
-                  ${rating ? `<span class="poi-rating">⭐ ${rating}</span>` : ''}
-                  ${cost ? `<span>${cost}</span>` : ''}
-                  ${open ? `<span>🕐 ${open}</span>` : ''}
-                  ${distTxt ? `<span>${distTxt}</span>` : ''}
-                </div>
-                <div style="font-size:12px; opacity:0.7; margin-top:2px">📍 ${addr}${ll ? '（' + ll + '）' : ''}</div>
-                <div style="font-size:12px; opacity:0.5; margin-top:2px">${p.business_area ? p.business_area + ' · ' : ''}${p.tel ? '☎ ' + p.tel : ''}</div>
-              </div>
-              <div class="poi-actions">
-                <button class="trek-btn trek-btn--secondary" data-copy="${i}" title="复制地址"><span class="btn-icon">${ICON_COPY}</span><span class="btn-label">复制地址</span></button>
-                <button class="trek-btn trek-btn--primary" data-add="${i}" title="添加进行程"><span class="btn-icon">${ICON_ADD}</span><span class="btn-label">添加进行程</span></button>
-              </div>
+      // v1.3.15: 单卡片 HTML（供全量渲染 + loadMore 增量追加复用）
+      function poiCardHtml(p, i) {
+        const addr = fullAddress(p)
+        const photo = p.photos && p.photos[0]
+        const typeCls = typeClass(p)
+        const rating = ratingText(p)
+        const cost = costText(p)
+        const open = openTimeText(p)
+        // v1.3.17: 信息过载优化——距离不再显示（锚点依赖行程已有地点，很多行程没有）；评分/人均上移名称行右侧（决策信息分层）；营业时间独立一行
+        return `
+          <div class="trek-card poi-card" style="padding:10px 12px; margin-bottom:8px">
+            <div class="poi-thumb">
+              ${photo ? `<img src="${esc(photo)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.innerHTML='${emojiFor(typeCls)}'" />` : emojiFor(typeCls)}
             </div>
-          `
-        }).join('')
+            <div style="flex:1; min-width:0">
+              <div class="poi-name" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap">
+                <span>${esc(p.name)}</span>
+                ${typeCls ? `<span class="poi-tag">${esc(typeCls)}</span>` : ''}
+                ${p.keytag ? `<span class="poi-tag">${esc(p.keytag)}</span>` : ''}
+                <span style="margin-left:auto; flex:none; display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary)">
+                  ${rating ? `<span class="poi-rating">⭐ ${esc(rating)}</span>` : ''}
+                  ${cost ? `<span>${esc(cost)}</span>` : ''}
+                </span>
+              </div>
+              <div style="display:flex; align-items:center; gap:5px; font-size:12px; opacity:0.7; margin-top:2px"><span class="poi-info-icon">${ICON_MAP_PIN}</span><span>${esc(addr)}</span></div>
+              ${p.tel ? `<div style="display:flex; align-items:center; gap:5px; font-size:12px; opacity:0.7; margin-top:1px"><span class="poi-info-icon">${ICON_PHONE}</span><span>${esc(p.tel)}</span></div>` : ''}
+              ${open ? `<div style="display:flex; align-items:center; gap:5px; font-size:12px; opacity:0.7; margin-top:1px"><span class="poi-info-icon">${ICON_CLOCK}</span><span>${esc(open)}</span></div>` : ''}
+            </div>
+            <div class="poi-actions">
+              <button class="trek-btn trek-btn--secondary" data-copy="${i}" title="复制地址" aria-label="复制地址"><span class="btn-icon">${ICON_COPY}</span><span class="btn-label">复制地址</span></button>
+              ${addedNames.has(p.name)
+                ? `<button class="trek-btn trek-btn--primary" disabled style="opacity:0.6" title="已在行程中" aria-label="已在行程中"><span class="btn-icon">${ICON_CHECK}</span><span class="btn-label">已在行程</span></button>`
+                : `<button class="trek-btn trek-btn--primary" data-add="${i}" title="添加进行程" aria-label="添加进行程"><span class="btn-icon">${ICON_ADD}</span><span class="btn-label">添加进行程</span></button>`}
+            </div>
+          </div>
+        `
+      }
 
-        // 复制地址
-        box.querySelectorAll('button[data-copy]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const p = pois[Number(btn.dataset.copy)]
+      let renderedPois = []  // v1.3.15: 当前展示数据（事件委托取数）
+
+      // v1.3.15: 事件委托——复制/添加按钮在容器上只绑一次，loadMore 增量追加后无需重绑
+      function bindPoiEvents(box) {
+        if (box.dataset.bound) return
+        box.dataset.bound = '1'
+        box.addEventListener('click', async (e) => {
+          const copyBtn = e.target.closest('button[data-copy]')
+          if (copyBtn) {
+            const p = renderedPois[Number(copyBtn.dataset.copy)]
+            if (!p) return
             const addr = fullAddress(p)
             const amapLink = p.id ? `https://www.amap.com/place/${p.id}` : ''
             const text = `${p.name}\n${addr}\n经纬度: ${p.location || '无'}${amapLink ? '\n地图: ' + amapLink : ''}\n类型: ${p.type || ''}${p.tel ? '\n电话: ' + p.tel : ''}${p.rating ? '\n评分: ' + p.rating : ''}${p.cost ? '\n人均: ¥' + p.cost : ''}`
             copyText(text)
-          })
-        })
-
-        // 添加进当前行程
-        box.querySelectorAll('button[data-add]').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const poi = pois[Number(btn.dataset.add)]
+            return
+          }
+          const addBtn = e.target.closest('button[data-add]')
+          if (addBtn) {
+            const poi = renderedPois[Number(addBtn.dataset.add)]
+            if (!poi) return
             if (!tripId) { trek.notify('error', '未检测到当前行程'); return }
-            btn.disabled = true; btn.innerHTML = `<span class="btn-icon">${ICON_LOADER}</span><span class="btn-label">添加中</span>`
+            addBtn.disabled = true; addBtn.innerHTML = `<span class="btn-icon">${ICON_LOADER}</span><span class="btn-label">添加中</span>`; addBtn.setAttribute('aria-label', '添加中')
             try {
               const res = await trek.invoke('/add', {
                 method: 'POST',
@@ -279,19 +405,69 @@
               })
               if (res.ok) {
                 trek.notify('success', `已添加「${poi.name}」到行程`)
-                btn.innerHTML = `<span class="btn-icon">${ICON_CHECK}</span><span class="btn-label">已添加</span>`
-                btn.style.opacity = '0.6'
+                addedNames.add(poi.name)
+                addBtn.innerHTML = `<span class="btn-icon">${ICON_CHECK}</span><span class="btn-label">已添加</span>`
+                addBtn.setAttribute('aria-label', '已添加')
+                addBtn.style.opacity = '0.6'
               } else {
                 trek.notify('error', res.error || '添加失败')
-                btn.disabled = false; btn.innerHTML = `<span class="btn-icon">${ICON_ADD}</span><span class="btn-label">添加进行程</span>`
+                addBtn.disabled = false; addBtn.innerHTML = `<span class="btn-icon">${ICON_ADD}</span><span class="btn-label">添加进行程</span>`; addBtn.setAttribute('aria-label', '添加进行程')
               }
-            } catch (e) {
-              trek.notify('error', '请求失败: ' + e.message)
-              btn.disabled = false; btn.innerHTML = `<span class="btn-icon">${ICON_ADD}</span><span class="btn-label">添加进行程</span>`
+            } catch (err) {
+              trek.notify('error', '请求失败: ' + err.message)
+              addBtn.disabled = false; addBtn.innerHTML = `<span class="btn-icon">${ICON_ADD}</span><span class="btn-label">添加进行程</span>`; addBtn.setAttribute('aria-label', '添加进行程')
             }
-          })
+          }
         })
       }
+
+      // v1.1: 渲染结果（含排序后）——v1.3.10: 操作 #results-list（pager 是 #results 静态子元素，不再被 innerHTML 销毁）
+      // v1.3.15: 空状态美化 + 事件委托
+      function renderResults(pois) {
+        const box = document.getElementById('results-list')
+        box.classList.add('trek-stagger')
+        renderedPois = pois || []
+        if (!renderedPois.length) {
+          showEmptyState()
+          return
+        }
+        box.innerHTML = renderedPois.map((p, i) => poiCardHtml(p, i)).join('')
+        bindPoiEvents(box)
+      }
+
+      // v1.3.15: 空状态——🔍 大图标 + 友好文案 + 操作按钮（清除筛选/换个关键词/手动选择城市）
+      function showEmptyState() {
+        const box = document.getElementById('results-list')
+        // v1.3.25: 空态必须隐藏 pager（筛选后 0 匹配走这里时 pager 残留会自相矛盾）
+        document.getElementById('pager').style.display = 'none'
+        const cityVal = document.getElementById('city').value.trim()
+        const filterActive = currentFilter !== 'all' || currentSort !== 'default'
+        const btns = []
+        if (filterActive) btns.push('<button class="trek-btn trek-btn--secondary" id="btn-clear-filter">清除筛选</button>')
+        btns.push('<button class="trek-btn trek-btn--secondary" id="btn-new-keyword">换个关键词</button>')
+        if (!cityVal) btns.push('<button class="trek-btn trek-btn--primary" id="btn-pick-city">手动选择城市</button>')
+        box.innerHTML = `
+          <div style="text-align:center; padding:36px 16px">
+            <div style="font-size:44px; margin-bottom:10px">🔍</div>
+            <div style="font-size:14px; font-weight:600; margin-bottom:4px">没找到相关地点</div>
+            <!-- v1.3.25: 文案条件修复——filterActive 时提示清筛选（原错误绑定 cityVal，筛选激活但城市为空时不提示） -->
+            <div style="font-size:12px; opacity:0.65; margin-bottom:14px">试试换个关键词${filterActive ? '，或清除筛选' : (!cityVal ? '，或手动填写城市' : '')}</div>
+            <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap">${btns.join('')}</div>
+          </div>`
+        const clearBtn = document.getElementById('btn-clear-filter')
+        if (clearBtn) clearBtn.addEventListener('click', () => {
+          currentFilter = 'all'; document.getElementById('filter-select').value = 'all'
+          currentSort = 'default'; document.getElementById('sort-select').value = 'default'
+          renderResults(visiblePois())
+        })
+        const kwBtn = document.getElementById('btn-new-keyword')
+        if (kwBtn) kwBtn.addEventListener('click', () => { document.getElementById('q').value = ''; document.getElementById('q').focus() })
+        const pickBtn = document.getElementById('btn-pick-city')
+        if (pickBtn) pickBtn.addEventListener('click', () => { document.getElementById('city').focus(); document.getElementById('city').select() })
+      }
+
+      // v1.3.25: HTML 转义——POI 字段来自高德 API，防异常店名破坏卡片结构/注入
+      function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
 
       // v1.1: 类型小类 → emoji 占位图（无缩略图时）
       function emojiFor(typeCls) {
@@ -307,55 +483,155 @@
         return '📍'
       }
 
+      // v1.2: 骨架屏——官方 .trek-skeleton 类（shimmer 动画，深浅色自适应 + reduce-motion 降级）
+      function showSkeleton(box) {
+        box.innerHTML = Array.from({ length: 4 }, () => `
+          <div class="trek-card poi-card" style="padding:10px 12px; margin-bottom:8px">
+            <div class="poi-thumb trek-skeleton" style="border:none"></div>
+            <div style="flex:1; min-width:0">
+              <div class="trek-skeleton" style="height:14px; width:60%; margin-bottom:8px"></div>
+              <div class="trek-skeleton" style="height:12px; width:80%; margin-bottom:6px"></div>
+              <div class="trek-skeleton" style="height:12px; width:50%"></div>
+            </div>
+          </div>`).join('')
+      }
+
+      // v1.2: 分页信息 + 加载更多按钮显隐
+      function updatePager() {
+        const pager = document.getElementById('pager')   // v1.3.10: pager 是静态子元素，永远存在
+        const info = document.getElementById('pager-info')
+        const more = document.getElementById('btn-more')
+        const loaded = currentPois.length
+        pager.style.display = 'block'
+        if (totalCount > loaded) {
+          info.textContent = `已加载 ${loaded} / ${totalCount} 条`
+          more.style.display = ''
+          more.disabled = false
+          more.innerHTML = '加载更多'
+        } else {
+          info.textContent = `共 ${loaded} 条`
+          more.style.display = 'none'
+        }
+      }
+
+      // v1.3.15: 错误状态——红字 + 重试按钮（直接调 doSearch()）
+      function showErrorState(msg) {
+        const box = document.getElementById('results-list')
+        box.innerHTML = `<div style="text-align:center; padding:36px 16px">
+          <div style="font-size:40px; margin-bottom:10px">😵</div>
+          <div style="color:var(--trek-danger,#ef4444); margin-bottom:14px">${msg}</div>
+          <button class="trek-btn trek-btn--primary" id="btn-retry">重试</button>
+        </div>`
+        const retry = document.getElementById('btn-retry')
+        if (retry) retry.addEventListener('click', () => doSearch())
+      }
+
+      // v1.2: 加载下一页并追加——v1.3.25: 用 lastQuery 快照（doSearch 成功时更新），改词不搜索时翻页仍是旧查询，防串包
+      async function loadMore() {
+        const q = lastQuery ? lastQuery.q : ''
+        const city = lastQuery ? lastQuery.city : ''
+        const more = document.getElementById('btn-more')
+        const box = document.getElementById('results-list')
+        const seq = requestSeq
+        if (!q) return
+        currentPage++
+        more.disabled = true
+        more.innerHTML = `<span class="btn-icon">${ICON_LOADER}</span><span class="btn-label">加载中</span>`
+        try {
+          const url = '/search?q=' + encodeURIComponent(q) + (city ? '&city=' + encodeURIComponent(city) : '') + '&page=' + currentPage
+          const data = await trek.invoke(url)
+          if (seq !== requestSeq) return
+          if (!data.ok) { trek.notify('error', data.error || '加载失败'); currentPage--; return }
+          const newPois = data.pois || []
+          currentPois = currentPois.concat(newPois)
+          // v1.3.15: 增量追加——默认视图直接 append 新卡片（事件委托已绑无需重绑），不再整页重建；筛选/排序激活时顺序会变，走全量重建
+          if (currentSort === 'default' && currentFilter === 'all') {
+            renderedPois = currentPois   // 默认视图展示数据 = 全量缓存
+            const prevLen = currentPois.length - newPois.length
+            box.insertAdjacentHTML('beforeend', newPois.map((p, j) => poiCardHtml(p, prevLen + j)).join(''))
+          } else {
+            renderResults(visiblePois())
+          }
+          updatePager()
+        } catch (e) {
+          if (seq !== requestSeq) return
+          trek.notify('error', '请求异常: ' + e.message)
+          currentPage--
+        } finally {
+          if (seq === requestSeq) { more.disabled = false; more.innerHTML = '加载更多' }
+        }
+      }
+
       async function doSearch() {
         const q = document.getElementById('q').value.trim()
         const city = document.getElementById('city').value.trim()
         if (!q) { trek.notify('warning', '请输入关键词'); return }
-        const box = document.getElementById('results')
-        box.innerHTML = '<p style="opacity:0.6">搜索中…</p>'
+        const box = document.getElementById('results-list')   // v1.3.10: 重建区 = results-list（pager 是 #results 静态子元素，不受影响）
+        const btn = document.getElementById('btn-search')
+        const seq = ++requestSeq
+        currentPage = 1
+        // v1.3.1: 加载反馈——按钮只显示转圈 icon + 轻提示 + 骨架屏（取消按钮已移除）
+        btn.disabled = true
+        btn.innerHTML = `<span class="btn-icon">${ICON_LOADER}</span>`
+        trek.notify('info', '搜索中…')
+        showSkeleton(box)
         try {
-          const url = '/search?q=' + encodeURIComponent(q) + (city ? '&city=' + encodeURIComponent(city) : '')
+          const url = '/search?q=' + encodeURIComponent(q) + (city ? '&city=' + encodeURIComponent(city) : '') + '&page=' + currentPage
           const data = await trek.invoke(url)
+          if (seq !== requestSeq) return
           if (!data.ok) {
             if (/key|Key|key/i.test(data.error || '')) { refreshKeyHint(false) }
-            box.innerHTML = `<p style="color:var(--trek-danger,#ef4444)">${data.error || '搜索失败'}</p>`
+            // v1.3.15: 错误状态加重试按钮
+            showErrorState(data.error || '搜索失败')
             return
           }
           refreshKeyHint(true)
-          // 先更新缓存再判空：防止“无结果”时排序按钮渲染上一次的结果
+          // 先更新缓存再判空：防止“无结果”时排序下拉渲染上一次的结果
           currentPois = data.pois || []
-          currentSort = 'default'
-          document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'))
-          // 默认排序按钮高亮：当前就是“默认”
-          const defBtn = document.querySelector('.sort-btn[data-sort="default"]')
-          if (defBtn) defBtn.classList.add('active')
-          if (!data.pois || data.pois.length === 0) {
-            document.getElementById('sort-row').style.display = 'none'
-            const cityVal = document.getElementById('city').value.trim()
-            box.innerHTML = cityVal
-              ? '<p style="opacity:0.6">无结果，试试换关键词或加城市</p>'
-              : '<p style="opacity:0.6">未识别到行程城市，试试手动填写城市，或在行程中添加一个地点后再搜</p>'
+          totalCount = Number(data.count) || 0
+          // v1.3.25: 成功搜索才更新快照（loadMore 用）——输入框后续改动不影响翻页查询
+          lastQuery = { q, city }
+          // v1.3.9: 不重置筛选/排序——用户偏好持续（换关键词搜索仍保留“只看餐饮+按评分”）
+          if (currentPois.length === 0) {
+            // v1.3.9: 空状态保留筛选/排序可见（用户知道有这功能，不再隐身）
+            showEmptyState()  // v1.3.25: showEmptyState 内已统一隐藏 pager，此分支不再单独处理
             return
           }
-          document.getElementById('sort-row').style.display = 'flex'
-          renderResults(sortedPois())
+          // v1.3.9: filter-sort-row 初始即可见，无需再设 display
+          // v1.3.3: 刷新行程地点列表——以行程真实数据为准（防止计划页删除后仍显示"已在行程"）
+          await loadTripPlaces()
+          renderResults(visiblePois())
+          updatePager()
         } catch (e) {
-          box.innerHTML = `<p style="color:var(--trek-danger,#ef4444)">请求异常: ${e.message}</p>`
+          if (seq !== requestSeq) return
+          // v1.3.15: 错误状态加重试按钮
+          showErrorState('请求异常: ' + e.message)
+        } finally {
+          if (seq === requestSeq) {
+            btn.disabled = false
+            btn.innerHTML = `<span class="btn-icon">${ICON_SEARCH}</span><span class="btn-label">搜索</span>`
+          }
         }
       }
 
-      // v1.1: 排序按钮
-      document.querySelectorAll('.sort-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          currentSort = btn.dataset.sort
-          document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'))
-          btn.classList.add('active')
-          renderResults(sortedPois())
-        })
+      // v1.3.2: 排序下拉（客户端排序）
+      document.getElementById('sort-select').addEventListener('change', (e) => {
+        currentSort = e.target.value
+        renderResults(visiblePois())
+      })
+
+      // v1.3.2: 筛选下拉（客户端筛选，无需重新请求）
+      document.getElementById('filter-select').addEventListener('change', (e) => {
+        currentFilter = e.target.value
+        renderResults(visiblePois())
       })
 
       document.getElementById('btn-search').addEventListener('click', doSearch)
       document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch() })
+      // v1.3.25: 城市框 Enter 同样触发搜索（填完城市回车是自然预期）
+      document.getElementById('city').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch() })
+      // v1.2: 加载更多（分页）
+      document.getElementById('btn-more').addEventListener('click', loadMore)
     </script>
   </body>
 </html>

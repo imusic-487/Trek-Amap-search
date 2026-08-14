@@ -1,9 +1,10 @@
 {
   "id": "amap-search",
   "name": "高德搜索",
-  "description": "在 TREK 里直接搜索高德 POI，一键复制地址或添加进当前行程（自动带坐标/地图链接/电话）。",
+  "description": "在 TREK 里直接搜遍高德地图——餐厅、景点、宝藏小店都能找，一键复制详情或添加进当前行程，坐标/地图链接/电话自动带上。Search Amap POIs inside TREK & add them to your trip in one click.",
+  "icon": "Search",
   "author": "imusic-487",
-  "version": "1.2.0",
+  "version": "1.3.26",
   "apiVersion": 1,
   "trek": ">=3.4.0 <4.0.0",
   "type": "trip-page",

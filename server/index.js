@@ -141,8 +141,8 @@ module.exports = definePlugin({
       },
     },
 
-    // 高德 POI 搜索
-    // GET /api/plugins/amap-search/search?q=关键词&city=城市&tripId=可选
+    // 高德 POI 搜索（v1.2: 支持分页）
+    // GET /api/plugins/amap-search/search?q=关键词&city=城市&page=页码&tripId=可选
     {
       method: 'GET',
       path: '/search',
@@ -150,6 +150,7 @@ module.exports = definePlugin({
       async handler(req, ctx) {
         const q = (req.query && req.query.q || '').trim()
         const city = (req.query && req.query.city || '').trim()
+        const page = Math.max(1, parseInt(req.query && req.query.page, 10) || 1)
         if (!q) {
           return json({ ok: false, error: '请输入搜索关键词' })
         }
@@ -161,6 +162,7 @@ module.exports = definePlugin({
           key,
           keywords: q,
           offset: '10',
+          page: String(page),
           extensions: 'all',
         })
         if (city) params.set('city', city)
@@ -209,7 +211,32 @@ module.exports = definePlugin({
             photos: (p.photos || []).map(ph => ph.url).filter(Boolean).slice(0, 3),
           }
         })
-        return json({ ok: true, count: data.count, pois })
+        return json({ ok: true, count: data.count, page, pois })
+      },
+    },
+
+    // 行程已有地点列表（v1.2: 添加状态持久化——前端按名称匹配标记"已在行程"）
+    // GET /api/plugins/amap-search/trip-places?tripId=123
+    {
+      method: 'GET',
+      path: '/trip-places',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = req.query && req.query.tripId
+        if (!tripId) {
+          return json({ ok: false, error: '缺少 tripId' })
+        }
+        try {
+          const places = await ctx.trips.getPlaces(Number(tripId))
+          return json({
+            ok: true,
+            places: (places || [])
+              .filter(p => p && p.name)
+              .map(p => ({ name: p.name, lat: p.lat, lng: p.lng })),
+          })
+        } catch (e) {
+          return json({ ok: false, error: `读取行程地点失败: ${e.message}` })
+        }
       },
     },
 
@@ -225,7 +252,7 @@ module.exports = definePlugin({
           return json({ ok: false, error: '缺少 tripId' })
         }
         try {
-          const places = await ctx.places.list(Number(tripId))
+          const places = await ctx.trips.getPlaces(Number(tripId))
           const anchor = (places || []).find(p =>
             Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng))
           )
@@ -260,7 +287,7 @@ module.exports = definePlugin({
             if (c) return json({ ok: true, city: c, source: 'title' })
           }
           // L2: 行程第一个有坐标的地点 → 高德逆地理反查城市
-          const places = await ctx.places.list(Number(tripId))
+          const places = await ctx.trips.getPlaces(Number(tripId))
           const anchor = (places || []).find(p =>
             Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng))
           )
