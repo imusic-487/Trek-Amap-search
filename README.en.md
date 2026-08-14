@@ -109,6 +109,50 @@ TREK shows this list to the admin at activation — exactly three permissions, a
 
 ## Changelog
 
+### v1.3.26 (2026-08-14) — Unified 40px search row
+- Host `.trek-input` has no fixed height (~36px) vs the 40px button → `.search-row .trek-input, .search-row .trek-btn { height: 40px }` aligns all three controls (web + mobile)
+
+### v1.3.25 (2026-08-14) — Correctness batch (qwen3.8-max UX review)
+- **loadMore uses a `lastQuery` snapshot** — editing the keyword without searching no longer mixes queries when paging
+- **Empty-state copy fixed** (now keyed on `filterActive`, not the city value)
+- **Pager hidden inside `showEmptyState()`** — no more "loaded 20/50 + load more" under a "no results" screen after filtering
+- Rating color `#f59e0b` → **`#d97706`** (amber-600, contrast 2.1→3.3:1 on light theme)
+- aria-labels on desktop icon buttons (synced across loading/done states), real link on the key hint, Enter submits from the city field
+- `esc()` HTML escaping on all POI fields, 16px more-button loader (no height jump), removed dead `.poi-meta` CSS
+
+### v1.3.24 (2026-08-14) — Lucide icons for info rows
+- 📍/☎/🕐 → **map-pin / phone-call / clock-arrow-right** (official lucide paths), unified 14px via `.poi-info-icon svg`
+
+### v1.3.23 (2026-08-14) — Hide ✨ auto-tag on mobile
+- In the 100px city box the tag collided with the search button → hidden on mobile (the detected city is visible in the input anyway)
+
+### v1.3.22 (2026-08-14) — Fix literal `${ICON_SEARCH}` in the button
+- Static HTML doesn't evaluate JS template syntax → inlined the lucide search SVG (lesson: no `\${}` in static HTML, only inside `<script>`)
+
+### v1.3.21 (2026-08-14) — Global icon+label search button
+- Mobile no longer hides the button label — same 🔍+搜索 on both ends
+
+### v1.3.20 (2026-08-14) — One-line mobile search row
+- Icon search button + 100px city field + flex:1 keyword → three stacked rows (~120px) became one (~40px)
+
+### v1.3.19 (2026-08-14) — Desktop action buttons top-aligned
+- `justify-content: center → flex-start` so the button column lines up with the name row (rating/cost), fixing the "not level" look
+
+### v1.3.18 (2026-08-14) — 12px rating/cost + full opening hours
+- Rating/cost down to 12px secondary; opening hours show first segment + "…N more" to avoid overflow
+
+### v1.3.17 (2026-08-14) — Card info hierarchy (user-approved)
+- **Distance removed** (anchor depends on trip places that often don't exist); rating/cost moved to the right of the name row; opening hours on their own line
+
+### v1.3.16 (2026-08-14) — Root fix for the filter dropdown width
+- SDK kit `enhanceSelect()` wraps the native select in `.trek-select-wrap` and hides it — the panel (`left:0;right:0`) follows the **wrap**, not the select → `.filter-sort-row .trek-select-wrap { flex:1; min-width:150px }` is the one that works
+
+### v1.3.15 (2026-08-14) — 6 UX improvements
+- Guide text under the search box; fixed select widths; trimmed bottom hint; **incremental loadMore** (insertAdjacentHTML) + **event delegation** (bindPoiEvents once); prettier empty state (🔍 + clear-filter / new-keyword / pick-city buttons); retry button on errors
+
+### v1.3.0–v1.3.14 (2026-08-14) — Feature & polish series (see the Chinese README for details)
+- v1.3.0 initial UX rework (P0+P1 + city hint) → v1.3.9 feature-logic layer (persistent filters/sort, city ✨ tag, direction labels) → v1.3.10 pager crash fix → v1.3.14 final scrollbar styling (official 6px track + theme-aware colors, full expansion both ends)
+
 ### v1.2.0 (2026-08-13)
 - Add button now shows icon feedback: spinner loader (lucide `loader` + rotation animation) while adding, check mark (lucide `check`) when added — replacing the plain text "Adding… / ✅ Added"
 
