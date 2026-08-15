@@ -234,15 +234,16 @@
       }
       refreshKeyHint()
 
-      // v1.3.27: 首次打开引导——三步使用法（用户反馈"装了不知道怎么用"；搜索/筛选后会被结果覆盖）
+      // v1.3.29: 首次打开引导——Key 前置（申请+填写位置）+ 三步使用法（用户反馈：没写 Key 在哪申请/在哪填）
       function showWelcomeGuide() {
         const box = document.getElementById('results-list')
         if (!box || currentPois.length) return
         box.innerHTML = `
-          <div style="text-align:center; padding:36px 16px">
+          <div style="text-align:center; padding:32px 16px">
             <div style="font-size:40px; margin-bottom:10px">🗺️</div>
             <div style="font-size:14px; font-weight:600; margin-bottom:12px">三步用起来</div>
-            <div style="text-align:left; max-width:300px; margin:0 auto; font-size:12px; line-height:1.8; opacity:0.8">
+            <div style="text-align:left; max-width:300px; margin:0 auto; font-size:12px; line-height:1.8; opacity:0.85">
+              <div style="display:flex; gap:8px; align-items:flex-start; background:rgba(250,204,21,0.12); border:1px solid rgba(250,204,21,0.35); border-radius:8px; padding:8px 10px; margin-bottom:10px"><span style="flex:none">🔑</span><span><b>先填 Key</b>：TREK <b>设置 → 插件 → 找地方</b> → 填「高德 Web 服务 Key」<br>还没 Key？<a href="https://console.amap.com/" target="_blank" rel="noopener" style="color:var(--trek-info,#2563eb)">console.amap.com</a> 免费申请，类型选「Web 服务」</span></div>
               <div style="display:flex; gap:8px; align-items:flex-start"><span style="flex:none">1️⃣</span><span>打开任意行程 → 顶部 tab「找地方」（就是本页）</span></div>
               <div style="display:flex; gap:8px; align-items:flex-start"><span style="flex:none">2️⃣</span><span>输入关键词（如：故宫/长城/西湖），城市自动识别可改</span></div>
               <div style="display:flex; gap:8px; align-items:flex-start"><span style="flex:none">3️⃣</span><span>一键复制地址，或添加进当前行程（坐标/地图链接/电话自动带上）</span></div>
