@@ -121,6 +121,10 @@ TREK shows this list to the admin at activation — exactly three permissions, a
 
 ## Changelog
 
+### v1.3.27 (2026-08-15) — First-open 3-step guide
+- Users reported not knowing how to use it after install: the initial empty state now shows a "3 steps to get started" guide (1. open a trip → the "Find Places" tab → 2. type a keyword & search → 3. copy details or add to trip), auto-covered once you search
+- Complements the key hint (v1.3.25): that answers "no key yet?", this answers "where do I even start?" — first-run loop closed
+
 ### v1.3.26 (2026-08-14) — Unified 40px search row
 - Host `.trek-input` has no fixed height (~36px) vs the 40px button → `.search-row .trek-input, .search-row .trek-btn { height: 40px }` aligns all three controls (web + mobile)
 
