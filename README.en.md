@@ -119,17 +119,6 @@ TREK shows this list to the admin at activation — exactly four permissions, an
 - Source & changelog: <https://github.com/imusic-487/Trek-Amap-search>
 
 
-## Roadmap
-
-- [ ] Search history (recent 10, tag shortcuts under the input, clear button)
-- [ ] "View on Amap" button (card corner → amap.com/place/{id}; QR code on mobile)
-- [ ] Copy options (address only / full details / name+address)
-- [ ] Distance sort (auto-enable when a trip anchor exists; greyed out + hint otherwise) — blocked on TREK SDK support
-- [ ] Batch add (select multiple POIs, add at once)
-- [ ] Map preview of results (mini map above the list)
-- [ ] Favorites (local persistence + export/import)
-- [x] ~~Empty-state copy + retry button + key-hint link~~ (v1.3.15 empty state + retry; v1.3.25 key-hint link)
-
 ## Changelog
 
 ### v1.4.0 (2026-09-07) — Batch coord repair + category auto-matching
