@@ -26,6 +26,8 @@ Search Amap POIs right inside TREK — find restaurants, sights & hidden gems, c
 - 🖥️ **Responsive action buttons** (v1.1.6): on mobile, Copy/Add sit side-by-side with labels; on desktop (≥641px) they stack vertically on the card's right edge as icon-only buttons (Lucide Copy / Plus, with hover tooltips)
 - 🔑 **Per-user API key** (Settings → Plugins, encrypted storage, never in code)
 - 💡 **Smart key hint**: shows a sign-up hint when no key is set, auto-hides once a key is saved or a search succeeds
+- 🏷️ **Auto category matching on add** (v1.3.30): when a POI is added, it's filed under your TREK category automatically based on Amap type + name — name signals win (Amap may tag restaurants as "shopping/other", e.g. "百益桑拿鸡" is filed under Restaurants by name); category names are resolved dynamically, so renaming/adding/removing your categories keeps matching working
+- 🛠️ **Batch coordinate repair for existing places** (v1.4.0): one-click scan & fix for places added/imported before the plugin was installed (GCJ-02 offset or missing coords) — preview candidates → confirm → batch write, so map pins stop sitting ~500m off
 
 ## Traveling in China? This plugin helps.
 
@@ -62,13 +64,14 @@ The plugin UI follows TREK's light/dark theme automatically.
 
 ## Permissions
 
-TREK shows this list to the admin at activation — exactly three permissions, and the only network call is to Amap's search endpoint.
+TREK shows this list to the admin at activation — exactly four permissions, and the only network call is to Amap's search endpoint.
 
 | Permission | Why |
 |---|---|
 | `db:read:trips` | Read the current trip context |
 | `db:write:places` | Create places in the trip |
-| `http:outbound:restapi.amap.com` | Call the Amap POI search API (server-side, the only network request) |
+| `db:read:categories` | Read your trip category list — matches categories by name when adding places (your categories can be renamed/added/removed; resolved dynamically by name) |
+| `http:outbound:restapi.amap.com` | Call the Amap POI search / coord-repair API (server-side, the only network request) |
 
 ## Setup
 
@@ -99,7 +102,7 @@ TREK shows this list to the admin at activation — exactly three permissions, a
 
 ## Compatibility
 
-- Requires **TREK >=3.4.0** (`>=3.4.0 <4.0.0`)
+- Requires **TREK >=3.4.0** (`>=3.4.0 <5.0.0`, incl. TREK 4.x)
 - No native modules, no paid API beyond Amap's API quota (personal-developer: 500,000 calls/day)
 
 ## Support
@@ -120,6 +123,20 @@ TREK shows this list to the admin at activation — exactly three permissions, a
 - [x] ~~Empty-state copy + retry button + key-hint link~~ (v1.3.15 empty state + retry; v1.3.25 key-hint link)
 
 ## Changelog
+
+### v1.4.0 (2026-09-07) — Batch coord repair + category auto-matching
+
+**🛠️ Batch coordinate repair (headline feature)**
+- Places added/imported before the plugin was installed may sit ~500m off (no GCJ-02→WGS-84 conversion at the time) or have no coords at all
+- New "Fix coordinates": scan all places in a trip → verify each against Amap → **preview candidates** (new coords / offset meters / name-match level) → check & batch-write
+- Anti-mismatch: when old coords exist, defaults to **searching around the original coordinates** (prevents a same-name chain store / same-name place in another district from being matched); radius & concurrency are configurable
+- Places within ≤50m are skipped quietly; Amap no-result / API failure skips safely
+- 3 new user settings: scan concurrency (1-5, default 3), proximity-search toggle, search radius (default 5000m)
+
+**🏷️ Category auto-matching (v1.3.30-32, first released in this version)**
+- v1.3.30: adding a POI auto-matches a TREK category — Amap type/typecode maps to a semantic category (Restaurants / Bar-Coffee / Hotels / Sights / Shopping / Transport / Activities / Beaches / Nature / Other), then the category **name** is resolved against your real category list for a dynamic id (your categories can be renamed/added/removed — no more hardcoded-id breakage)
+- v1.3.31: name signals win — Amap may tag food places as "shopping/other" (e.g. "百益桑拿鸡大良店"), so a POI whose name contains food hints is filed under Restaurants by user intent; also fixed the category dropdown being covered by the next card (host select overlay z-index)
+- v1.3.32: version wrap-up
 
 ### v1.3.29 (2026-08-16) — Key step added to first-open guide
 - Users said the 3-step guide didn't say where to get/enter the key: the guide now opens with a highlighted 🔑 block — **TREK Settings → Plugins → 找地方 → enter your Amap Web Service key**, with the free console.amap.com signup link (choose "Web Service" type)
@@ -217,5 +234,9 @@ TREK shows this list to the admin at activation — exactly three permissions, a
 ## License
 
 MIT — see [LICENSE](./LICENSE).
+
+## Credits
+
+- **Batch coordinate repair** (v1.4.0) design draws on [chondaen12/Trek-Amap-search](https://github.com/chondaen12/Trek-Amap-search) (MIT) — the two-phase "scan preview → confirm write" flow comes from the coord-scan implementation in that fork; attribution is kept in the code comments.
 
 <sub>This is a community plugin, not maintained or endorsed by the TREK core team.</sub>
