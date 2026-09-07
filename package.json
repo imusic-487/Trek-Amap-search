@@ -1,8 +1,8 @@
 {
   "name": "amap-search",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "private": true,
-  "description": "高德 POI 搜索插件（TREK page 类型）",
+  "description": "高德 POI 搜索插件（TREK page 类型）v1.4.0：新增存量坐标修复",
   "main": "server/index.js",
   "scripts": {
     "pack": "trek-plugin-sdk pack"
