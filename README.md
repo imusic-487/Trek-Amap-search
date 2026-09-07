@@ -301,4 +301,8 @@ TREK 官方有一个关于中国地图模式的讨论（[#1636](https://github.c
 
 MIT — 见 [LICENSE](./LICENSE)。
 
+## 致谢
+
+- **坐标批量修复功能**（v1.4.0）设计参考 [chondaen12/Trek-Amap-search](https://github.com/chondaen12/Trek-Amap-search)（MIT）——两段式「扫描预览 → 用户确认写入」方案源自其 fork 中的 coord-scan 实现，代码注释已保留出处。
+
 <sub>社区插件，非 TREK 核心团队维护。</sub>
