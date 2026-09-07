@@ -29,6 +29,15 @@
         .filter-sort-row { flex-wrap: wrap; }
       }
       .poi-card { display: flex; gap: 12px; }
+      /* v1.3.31: 修复分类下拉被下一张卡片盖住——宿主增强 select 的 .trek-select-menu 是 absolute z-index:50，
+         卡片若因 transform/backdrop 等创建层叠上下文，菜单会被兄弟卡片盖住。解法：
+         ① 卡片建立 position:relative 层叠上下文基线；
+         ② 展开时（:has aria-expanded=true）把当前卡片 z-index 提到最高，菜单再+1；
+         ③ 菜单自身 z-index 提到 1000 兜底。 */
+      .poi-card { position: relative; z-index: auto; }
+      .poi-card .trek-select-wrap { position: relative; z-index: 1; }
+      .poi-card .trek-select-menu { z-index: 1000 !important; }
+      .poi-card:has(.trek-select-trigger[aria-expanded="true"]) { z-index: 999; }
       .poi-thumb {
         width: 96px; height: 96px; border-radius: 8px; flex-shrink: 0;
         object-fit: cover; background: var(--trek-border, rgba(128,128,128,0.15));
@@ -159,6 +168,25 @@
       let requestSeq = 0         // v1.2: 请求序号——取消/新请求使旧响应作废
       let addedNames = new Set() // v1.2: 行程已有地点名（刷新后标记"已在行程"）
       let pagerEl = null         // v1.3.10: pager 持久引用——innerHTML 会销毁节点，用引用避免 getElementById 返回 null
+      let categories = []        // 分类列表（{id, name}）
+      let categoryMap = {}       // id -> name 映射
+
+      // 页面加载时获取分类列表
+      async function loadCategories() {
+        try {
+          const res = await trek.invoke('/categories')
+          if (res && res.ok && res.categories) {
+            categories = res.categories
+            categoryMap = {}
+            res.categories.forEach(c => {
+              if (c.id && c.name) categoryMap[c.id] = c.name
+            })
+          }
+        } catch (e) {
+          console.error('加载分类失败:', e)
+        }
+      }
+      loadCategories()
 
       trek.onContext((ctx) => {
         const tid = ctx && ctx.tripId ? String(ctx.tripId) : null
@@ -273,6 +301,107 @@
         const c = Number(p.cost)
         return Number.isFinite(c) && c > 0 ? '¥' + c : ''
       }
+
+      // 分类自动匹配（与后端 matchCategory 逻辑一致）——返回分类【名称】而非 id
+      // ⚠️ 用户分类列表是自定义的（可改名/增删），硬编码 id 会失效；名称由 resolveCategoryId 动态解析
+      function autoMatchCategory(p) {
+        // v1.3.31: 名称信号优先——高德 type 可能把餐饮标成购物/其他（如“百益桑拿鸡大良店” type=购物服务）
+        const n = (p.name || '').toLowerCase()
+        const FOOD_NAME_HINTS = ['桑拿鸡', '餐厅', '食府', '饭馆', '饭店', '酒楼', '火锅', '烧烤', '菜馆', '食堂', '面馆', '小吃', '茶餐厅', '料理', 'restaurant', 'canteen', '餐']
+        if (n && FOOD_NAME_HINTS.some(h => n.includes(h))) {
+          if (n.includes('咖啡') || n.includes('酒吧') || n.includes('茶')) {
+            return '酒吧/咖啡'
+          }
+          return '餐厅'
+        }
+        if (!p.type && !p.typecode) return null
+        const t = (p.type || '').toLowerCase()
+        const tc = (p.typecode || '').substring(0, 2)
+
+        // 餐饮类 → 餐厅 或 酒吧/咖啡
+        if (t.includes('餐饮') || tc === '05') {
+          if (t.includes('咖啡') || t.includes('酒吧') || t.includes('茶')) {
+            return '酒吧/咖啡'
+          }
+          return '餐厅'
+        }
+        if (t.includes('咖啡')) return '酒吧/咖啡'
+
+        // 住宿类 → 酒店
+        if (t.includes('住宿') || t.includes('酒店') || t.includes('宾馆') || t.includes('旅馆') || t.includes('民宿') || tc === '10') {
+          return '酒店'
+        }
+
+        // 风景名胜/景点类 → 景点
+        if (t.includes('风景名胜') || t.includes('公园') || t.includes('广场') || t.includes('名胜') || t.includes('景点') || t.includes('旅游景点') || tc === '11') {
+          return '景点'
+        }
+        // 科教文化类 → 景点
+        if (t.includes('科教文化') || t.includes('博物馆') || t.includes('展馆') || t.includes('图书馆') || t.includes('文化宫')) {
+          return '景点'
+        }
+
+        // 购物类 → 购物
+        if (t.includes('购物') || t.includes('商场') || t.includes('超市') || t.includes('市场') || t.includes('专卖') || tc === '06') {
+          return '购物'
+        }
+
+        // 交通类 → 交通
+        if (t.includes('交通') || t.includes('地铁') || t.includes('公交') || t.includes('机场') || t.includes('火车站') || t.includes('汽车站') || t.includes('码头') || tc === '15') {
+          return '交通'
+        }
+
+        // 体育/娱乐/活动类 → 活动
+        if (t.includes('体育') || t.includes('娱乐') || t.includes('休闲') || t.includes('运动场馆') || t.includes('ktv') || t.includes('电影院') || t.includes('剧院') || tc.startsWith('07') || tc.startsWith('08')) {
+          return '活动'
+        }
+
+        // 沙滩类 → 沙滩
+        if (t.includes('沙滩') || t.includes('海滩') || t.includes('海湾') || t.includes('海滨')) {
+          return '沙滩'
+        }
+
+        // 自然类 → 自然
+        if (t.includes('自然') || t.includes('山') || t.includes('森林') || t.includes('湖泊') || t.includes('河流') || t.includes('瀑布') || t.includes('自然保护区')) {
+          return '自然'
+        }
+
+        // 其他 → 其他
+        return '其他'
+      }
+
+      // 语义分类 → 别名表（与后端 CATEGORY_ALIASES 保持一致：中英文 + 口语叫法）
+      const CATEGORY_ALIASES = {
+        '餐厅': ['餐厅', '美食', '吃的', '餐饮', '饭馆', 'restaurant', 'canteen', 'dining', 'food', 'eat', 'eatery'],
+        '酒吧/咖啡': ['酒吧', '咖啡', '茶', '饮品', 'bar', 'cafe', 'coffee', 'tea', 'drink'],
+        '酒店': ['酒店', '住宿', '宾馆', '旅馆', '民宿', 'hotel', 'inn', 'lodge', 'stay', 'accommodation'],
+        '景点': ['景点', '景区', '风景', '名胜', '公园', '游玩', 'attraction', 'sight', 'scenic', 'sightseeing', 'tourist'],
+        '购物': ['购物', '商场', '超市', '市场', 'shopping', 'mall', 'market', 'store'],
+        '交通': ['交通', '地铁', '公交', '机场', '车站', '码头', 'transport', 'station', 'airport', 'transit'],
+        '活动': ['活动', '娱乐', '体育', '休闲', '运动', 'activity', 'entertainment', 'sport', 'fun'],
+        '沙滩': ['沙滩', '海滩', '海滨', 'beach', 'seaside'],
+        '自然': ['自然', '山', '森林', '湖泊', '河流', '瀑布', 'nature', 'mountain', 'forest', 'lake', 'outdoor'],
+        '其他': ['其他', '其它', 'other', 'misc', 'miscellaneous'],
+      }
+
+      // 按名称在用户真实分类列表里解析 id（语义名精确优先 → 别名展开 → 模糊包含兜底）
+      function resolveCategoryIdByName(categories, name) {
+        if (!categories || !name) return null
+        // 1) 语义名本身精确匹配（最高优先：用户分类就叫“景点”，应优先于别名“Attraction”)
+        let hit = categories.find(c => c && c.name && String(c.name).trim() === name)
+        if (hit) return hit.id
+        // 2) 别名展开精确匹配（用户分类名 == 任一别名，大小写不敏感）
+        const aliases = (CATEGORY_ALIASES[name] || [name]).map(a => String(a).toLowerCase())
+        hit = categories.find(c => c && c.name && aliases.includes(String(c.name).trim().toLowerCase()))
+        if (hit) return hit.id
+        // 3) 模糊包含匹配（用户可能改名，如“美食餐厅”含“餐厅”)
+        hit = categories.find(c => {
+          if (!c || !c.name) return false
+          const cn = String(c.name).trim().toLowerCase()
+          return aliases.some(a => cn.includes(a) || a.includes(cn))
+        })
+        return hit ? hit.id : null
+      }
       // v1.1: 营业时间——高德 opentime2 可能是数组或字符串，先归一到字符串；v1.3.18: 去掉 24 字符截断，完整显示第一段（多段只提示数量防卡片爆炸）
       function openTimeText(p) {
         if (!p.opentime) return ''
@@ -364,6 +493,21 @@
         const rating = ratingText(p)
         const cost = costText(p)
         const open = openTimeText(p)
+        // 自动匹配分类（返回名称 → 从真实分类列表解析 id）
+        const autoCatName = autoMatchCategory(p)
+        const autoCatId = resolveCategoryIdByName(categories, autoCatName)
+        const autoCatLabel = autoCatId && categoryMap[autoCatId] ? categoryMap[autoCatId] : (autoCatName || '其他')
+        // 生成分类下拉选项
+        let catOptions = categories.map(c => 
+          `<option value="${c.id}" ${c.id === autoCatId ? 'selected' : ''}>${esc(c.name)}</option>`
+        ).join('')
+        // 兜底：分类列表为空时，尝试按名称找“其他”，找不到则不设默认（让后端兜底）
+        if (!catOptions) {
+          const other = categories.find(c => c && c.name === '其他') || categories[0]
+          catOptions = other
+            ? `<option value="${other.id}">${esc(other.name)}</option>`
+            : ''
+        }
         // v1.3.17: 信息过载优化——距离不再显示（锚点依赖行程已有地点，很多行程没有）；评分/人均上移名称行右侧（决策信息分层）；营业时间独立一行
         return `
           <div class="trek-card poi-card" style="padding:10px 12px; margin-bottom:8px">
@@ -383,6 +527,16 @@
               <div style="display:flex; align-items:center; gap:5px; font-size:12px; opacity:0.7; margin-top:2px"><span class="poi-info-icon">${ICON_MAP_PIN}</span><span>${esc(addr)}</span></div>
               ${p.tel ? `<div style="display:flex; align-items:center; gap:5px; font-size:12px; opacity:0.7; margin-top:1px"><span class="poi-info-icon">${ICON_PHONE}</span><span>${esc(p.tel)}</span></div>` : ''}
               ${open ? `<div style="display:flex; align-items:center; gap:5px; font-size:12px; opacity:0.7; margin-top:1px"><span class="poi-info-icon">${ICON_CLOCK}</span><span>${esc(open)}</span></div>` : ''}
+              <!-- 分类选择区 -->
+              <div style="margin-top:8px; padding-top:8px; border-top:1px solid var(--trek-border, rgba(128,128,128,0.15))">
+                <div style="display:flex; align-items:center; gap:6px; font-size:12px">
+                  <span style="opacity:0.7">将添加为：</span>
+                  <span class="poi-tag" style="background:var(--trek-primary, #2563eb); color:white">${esc(autoCatLabel)}</span>
+                  <select class="trek-select" data-category-select="${i}" style="flex:1; min-width:100px; font-size:12px">
+                    ${catOptions}
+                  </select>
+                </div>
+              </div>
             </div>
             <div class="poi-actions">
               <button class="trek-btn trek-btn--secondary" data-copy="${i}" title="复制地址" aria-label="复制地址"><span class="btn-icon">${ICON_COPY}</span><span class="btn-label">复制地址</span></button>
@@ -416,11 +570,14 @@
             const poi = renderedPois[Number(addBtn.dataset.add)]
             if (!poi) return
             if (!tripId) { trek.notify('error', '未检测到当前行程'); return }
+            // 获取用户选择的分类
+            const catSelect = document.querySelector(`select[data-category-select="${addBtn.dataset.add}"]`)
+            const categoryId = catSelect ? Number(catSelect.value) : null
             addBtn.disabled = true; addBtn.innerHTML = `<span class="btn-icon">${ICON_LOADER}</span><span class="btn-label">添加中</span>`; addBtn.setAttribute('aria-label', '添加中')
             try {
               const res = await trek.invoke('/add', {
                 method: 'POST',
-                body: JSON.stringify({ tripId: Number(tripId), place: poi }),
+                body: JSON.stringify({ tripId: Number(tripId), place: poi, category_id: categoryId }),
               })
               if (res.ok) {
                 trek.notify('success', `已添加「${poi.name}」到行程`)

@@ -119,6 +119,114 @@ async function regeoCity(lng, lat, ctx) {
   }
 }
 
+// ===== 分类映射（高德 type/typecode → TREK 分类【名称】） =====
+// ⚠️ 设计要点：只返回分类名称，不返回 id！
+// 用户的 TREK 分类列表是自定义的（可改名/增删/重建），硬编码 id 会因列表变化而失效。
+// 调用方必须用 ctx.categories.list() 按名称动态解析出真实 id（见 resolveCategoryId）。
+
+// 语义分类 → 别名表（中英文 + 口语叫法，匹配用户自定义分类名时按别名展开）
+const CATEGORY_ALIASES = {
+  '餐厅': ['餐厅', '美食', '吃的', '餐饮', '饭馆', 'restaurant', 'canteen', 'dining', 'food', 'eat', 'eatery'],
+  '酒吧/咖啡': ['酒吧', '咖啡', '茶', '饮品', 'bar', 'cafe', 'coffee', 'tea', 'drink'],
+  '酒店': ['酒店', '住宿', '宾馆', '旅馆', '民宿', 'hotel', 'inn', 'lodge', 'stay', 'accommodation'],
+  '景点': ['景点', '景区', '风景', '名胜', '公园', '游玩', 'attraction', 'sight', 'scenic', 'sightseeing', 'tourist'],
+  '购物': ['购物', '商场', '超市', '市场', 'shopping', 'mall', 'market', 'store'],
+  '交通': ['交通', '地铁', '公交', '机场', '车站', '码头', 'transport', 'station', 'airport', 'transit'],
+  '活动': ['活动', '娱乐', '体育', '休闲', '运动', 'activity', 'entertainment', 'sport', 'fun'],
+  '沙滩': ['沙滩', '海滩', '海滨', 'beach', 'seaside'],
+  '自然': ['自然', '山', '森林', '湖泊', '河流', '瀑布', 'nature', 'mountain', 'forest', 'lake', 'outdoor'],
+  '其他': ['其他', '其它', 'other', 'misc', 'miscellaneous'],
+}
+
+function matchCategory(type, typecode, name) {
+  // v1.3.31: 名称信号优先——高德 type 可能把餐饮标成购物/其他（如“百益桑拿鸡大良店” type=购物服务）
+  // 但 POI 名称含明显餐饮特征词时，用户意图就是“吃”，优先归入餐厅语义
+  const n = (name || '').toLowerCase()
+  const FOOD_NAME_HINTS = ['桑拿鸡', '餐厅', '食府', '饭馆', '饭店', '酒楼', '火锅', '烧烤', '菜馆', '食堂', '面馆', '小吃', '茶餐厅', '料理', 'restaurant', 'canteen', '餐']
+  if (n && FOOD_NAME_HINTS.some(h => n.includes(h))) {
+    // 咖啡/酒吧仍单独判断（名称含咖啡/酒吧 → 酒吧/咖啡）
+    if (n.includes('咖啡') || n.includes('酒吧') || n.includes('茶')) {
+      return '酒吧/咖啡'
+    }
+    return '餐厅'
+  }
+  if (!type && !typecode) return null
+  const t = (type || '').toLowerCase()
+  const tc = (typecode || '').substring(0, 2)  // typecode 前两位是大类
+
+  // 餐饮类 → 餐厅 或 酒吧/咖啡
+  if (t.includes('餐饮') || tc === '05') {
+    if (t.includes('咖啡') || t.includes('酒吧') || t.includes('茶')) {
+      return '酒吧/咖啡'
+    }
+    return '餐厅'
+  }
+  // 咖啡单独判断
+  if (t.includes('咖啡')) return '酒吧/咖啡'
+
+  // 住宿类 → 酒店
+  if (t.includes('住宿') || t.includes('酒店') || t.includes('宾馆') || t.includes('旅馆') || t.includes('民宿') || tc === '10') {
+    return '酒店'
+  }
+
+  // 风景名胜/景点类 → 景点（优先）或 Attraction
+  if (t.includes('风景名胜') || t.includes('公园') || t.includes('广场') || t.includes('名胜') || t.includes('景点') || t.includes('旅游景点') || tc === '11') {
+    return '景点'
+  }
+  // 科教文化类 → 景点（博物馆、展馆等）
+  if (t.includes('科教文化') || t.includes('博物馆') || t.includes('展馆') || t.includes('图书馆') || t.includes('文化宫')) {
+    return '景点'
+  }
+
+  // 购物类 → 购物
+  if (t.includes('购物') || t.includes('商场') || t.includes('超市') || t.includes('市场') || t.includes('专卖') || tc === '06') {
+    return '购物'
+  }
+
+  // 交通类 → 交通
+  if (t.includes('交通') || t.includes('地铁') || t.includes('公交') || t.includes('机场') || t.includes('火车站') || t.includes('汽车站') || t.includes('码头') || tc === '15') {
+    return '交通'
+  }
+
+  // 体育/娱乐/活动类 → 活动
+  if (t.includes('体育') || t.includes('娱乐') || t.includes('休闲') || t.includes('运动场馆') || t.includes('ktv') || t.includes('电影院') || t.includes('剧院') || tc.startsWith('07') || tc.startsWith('08')) {
+    return '活动'
+  }
+
+  // 沙滩类 → 沙滩
+  if (t.includes('沙滩') || t.includes('海滩') || t.includes('海湾') || t.includes('海滨')) {
+    return '沙滩'
+  }
+
+  // 自然类 → 自然
+  if (t.includes('自然') || t.includes('山') || t.includes('森林') || t.includes('湖泊') || t.includes('河流') || t.includes('瀑布') || t.includes('自然保护区')) {
+    return '自然'
+  }
+
+  // 其他 → 其他
+  return '其他'
+}
+
+// 按名称在用户的真实分类列表里解析 id（语义名精确优先 → 别名展开 → 模糊包含兜底）
+function resolveCategoryId(categories, name) {
+  if (!categories || !name) return null
+  const list = Array.isArray(categories) ? categories : (categories.categories || [])
+  // 1) 语义名本身精确匹配（最高优先：用户分类就叫“景点”，应优先于别名“Attraction”)
+  let hit = list.find(c => c && c.name && String(c.name).trim() === name)
+  if (hit) return hit.id
+  // 2) 别名展开精确匹配（用户分类名 == 任一别名，大小写不敏感）
+  const aliases = (CATEGORY_ALIASES[name] || [name]).map(a => String(a).toLowerCase())
+  hit = list.find(c => c && c.name && aliases.includes(String(c.name).trim().toLowerCase()))
+  if (hit) return hit.id
+  // 3) 模糊包含匹配（用户可能改名，如“美食餐厅”含“餐厅”/“restaurant”)
+  hit = list.find(c => {
+    if (!c || !c.name) return false
+    const cn = String(c.name).trim().toLowerCase()
+    return aliases.some(a => cn.includes(a) || a.includes(cn))
+  })
+  return hit ? hit.id : null
+}
+
 
 module.exports = definePlugin({
   async onLoad(ctx) {
@@ -266,6 +374,22 @@ module.exports = definePlugin({
       },
     },
 
+    // TREK 分类列表（供前端下拉选择）
+    // GET /api/plugins/amap-search/categories
+    {
+      method: 'GET',
+      path: '/categories',
+      auth: true,
+      async handler(req, ctx) {
+        try {
+          const categories = await ctx.categories.list()
+          return json({ ok: true, categories: categories || [] })
+        } catch (e) {
+          return json({ ok: false, error: `读取分类失败: ${e.message}` })
+        }
+      },
+    },
+
     // 识别行程城市（三级推断）：标题匹配 → 地点坐标 regeo → 地址解析
     // GET /api/plugins/amap-search/trip-city?tripId=123
     {
@@ -309,7 +433,7 @@ module.exports = definePlugin({
     },
 
     // 把 POI 写入行程
-    // POST /api/plugins/amap-search/add  body: { tripId, place: { name, address, location, type } }
+    // POST /api/plugins/amap-search/add  body: { tripId, place: { name, address, location, type, typecode }, category_id?: number }
     {
       method: 'POST',
       path: '/add',
@@ -328,9 +452,22 @@ module.exports = definePlugin({
           : (Number.isFinite(gLng) && Number.isFinite(gLat)
               ? `https://uri.amap.com/marker?position=${gLng},${gLat}&name=${encodeURIComponent(place.name)}`
               : undefined)
+        // 分类处理：前端传 category_id 则用前端值，否则按名称自动匹配（动态解析 id）
+        let categoryId = req.body && req.body.category_id
+        if (categoryId === undefined || categoryId === null || categoryId === '') {
+          // v1.3.30: 不再硬编码 id——matchCategory 返回分类名，再从用户真实分类列表解析 id
+          try {
+            const cats = await ctx.categories.list()
+            const catName = matchCategory(place.type, place.typecode, place.name)
+            categoryId = resolveCategoryId(cats, catName)
+          } catch (e) {
+            ctx.log.warn(`[amap] 分类解析失败，使用默认分类: ${e.message}`)
+            categoryId = null
+          }
+        }
         try {
           const notes = place.tel ? `📞 电话：${place.tel}` : undefined
-          const created = await ctx.places.create(tripId, {
+          const placeData = {
             name: place.name,
             description: place.type || '',
             address: place.address || '',
@@ -338,7 +475,12 @@ module.exports = definePlugin({
             lng: Number.isFinite(lng) ? lng : undefined,
             website: amapLink,
             notes,
-          })
+          }
+          // 只有成功匹配到分类才传 category_id，否则让 TREK 用默认
+          if (categoryId && Number.isFinite(Number(categoryId))) {
+            placeData.category_id = Number(categoryId)
+          }
+          const created = await ctx.places.create(tripId, placeData)
           return json({ ok: true, place: created })
         } catch (e) {
           return json({ ok: false, error: `写入失败: ${e.message}` })
