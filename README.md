@@ -8,6 +8,14 @@ Search Amap POIs right inside TREK — find restaurants, sights & hidden gems, c
 
 ![找地方 — cover](docs/cover.jpg)
 
+## ✨ v1.4.0 新版亮点
+
+- 🛠️ **存量坐标批量修复**：装插件之前添加的旧地点（坐标偏 ~500m 或缺失），一键扫描 → 预览候选 → 确认后批量修正，地图位置不再偏移
+- 🏷️ **添加时自动匹配分类**：新地点按高德 type + 名称自动归入你的 TREK 分类，分类改名/增删后依然匹配
+- 🔼 兼容 **TREK 4.x**（范围扩至 `<5.0.0`）
+
+> 完整版本历史见 [CHANGELOG.md](./CHANGELOG.md)。
+
 ## What it does · 功能
 
 **找地方** 以 **trip-page** 类型挂在行程规划器内部（TREK 3.4+），始终跟随当前打开的行程。搜索高德上的任意地点，然后复制详情或直接写进行程。

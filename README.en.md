@@ -8,6 +8,14 @@ Search Amap POIs right inside TREK — find restaurants, sights & hidden gems, c
 
 ![找地方 / Amap Search — cover](docs/cover.jpg)
 
+## ✨ What's new in v1.4.0
+
+- 🛠️ **Batch coordinate repair**: places added before the plugin existed (coords ~500m off or missing) — scan → preview → confirm & fix in one go, so pins sit exactly right
+- 🏷️ **Auto category matching on add**: new POIs are filed under your TREK category automatically from Amap type + name — name signals win (e.g. 百益桑拿鸡, tagged by Amap as "shopping", still lands under Restaurants); keeps working after you rename/add/remove categories
+- 🔼 Now compatible with **TREK 4.x** (range widened to `<5.0.0`)
+
+> Full version history: [CHANGELOG.en.md](./CHANGELOG.en.md).
+
 ## What it does
 
 **找地方** mounts as a tab **inside the trip planner** (a `trip-page`, TREK 3.4+), always scoped to the trip you are viewing. Search any POI on Amap — China's Gaode Maps — then copy the details or drop the place straight into the trip.
